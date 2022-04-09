@@ -1,3 +1,4 @@
+import java.awt.Color
 
 /**
  * Class representing an individual in the population.
@@ -13,15 +14,17 @@ class Individual(private val image: ImageObject) {
     private val imgHeight = image.getHeight()
     private val geneSize = imgHeight * imgWidth
 
-    val chromosome: Array<Direction> = construction()
-    private val segments: ArrayList<MutableList<Int>> = ArrayList()
-
     // Objective functions
     val overallDeviation: Double = 0.0
     val connectivity: Double = 0.0
     val edgeValue: Double = 0.0
 
     val rank: Int = 0
+
+
+    val chromosome: Array<Direction> = construction()
+    val segments: ArrayList<MutableList<Int>> = createSegments()
+    val segment_mu: ArrayList<Color>  = averageSegmentColor()
 
 
     private fun construction(): Array<Direction> {
@@ -75,11 +78,12 @@ class Individual(private val image: ImageObject) {
         return legalMoves.toTypedArray()
     }
 
-    fun createSegments() {
+    fun createSegments(): ArrayList<MutableList<Int>> {
         /**
          * Creates the segments of the image by traversing the graph connecting the pixels
          * Does not pay attention to the direction of the edges.
          */
+        val segments = ArrayList<MutableList<Int>>()
         val unvisitedNodes = MutableList(geneSize) { it }
 
         while (unvisitedNodes.isNotEmpty()) {
@@ -87,14 +91,35 @@ class Individual(private val image: ImageObject) {
 
             val segment = getConnectedNodes(node)
             if (segment.isEmpty())
-                this.segments.add(mutableListOf(node))
+                segments.add(mutableListOf(node))
             else
-                this.segments.add(segment)
+                segments.add(segment)
 
             unvisitedNodes.removeAll(segment)
         }
+        return segments
         // this.segments.forEach { println(it) }
     }
+    fun averageSegmentColor(): ArrayList<Color> {
+        /**
+         * Calculates the average color of each segment.
+         */
+        val segmentColors = ArrayList<Color>()
+        for (segment in this.segments) {
+            var red = 0
+            var green = 0
+            var blue = 0
+            for (pixel in segment) {
+                val rgb = image.getPixel(pixel)
+                red += rgb[0]
+                green += rgb[1]
+                blue += rgb[2]
+            }
+            segmentColors.add(Color(red / segment.size, green / segment.size, blue / segment.size))
+        }
+        return segmentColors
+    }
+
     private fun getConnectedNodes(i: Int, visited: MutableList<Int> = mutableListOf()): MutableList<Int> {
         /**
          * Returns the connected nodes of the given start node.
@@ -196,6 +221,23 @@ class Individual(private val image: ImageObject) {
     fun calculateFitnesses() {
         // Calculate the fitness for each objective
         TODO("Not yet implemented")
+    }
+    fun connectivityFitness(): Double {
+        return 0.0
+    }
+    fun edgeFitness(): Double {
+        var sum = 0.0
+        for (segment in this.segments) {
+
+            TODO("WHERE EIVIND LEFT OFF")
+
+
+        }
+        return 0.0
+    }
+    fun dist(): Double {
+
+        return 0.0
     }
 
 }

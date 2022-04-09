@@ -24,6 +24,10 @@ class Population(populationSize: Int,
         //TODO("not implemented")
         return individuals[0]
     }
+    fun crossover(): Individual {
+        //TODO("not implemented")
+        return individuals[0]
+    }
 
     fun mutate(mutationRate: Double) {
         individuals.forEach {

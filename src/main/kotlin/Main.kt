@@ -7,14 +7,22 @@ import kotlin.system.measureTimeMillis
  */
 
 fun main(args: Array<String>) {
-    println("Hello World!")
+
     val systemPath = System.getProperty("user.dir")
     val imgPath = "$systemPath/src/main/resources/training_images/118035/Test image.jpg"
 
     val image = ImageObject(File(imgPath))
 
-    val GA = GeneticAlgorithm(image)
+    // starts the program and also times the execution
+    measureTimeMillis {
+        val GA = GeneticAlgorithm(image)
+    }.let {
+        println("Time taken: $it ms, ${it / 1000} s")
+    }
+
     // GA.run()
+    // println(GA.population.individuals[0].segment_mu)
+    //println(GA.population.individuals[0].segments.size)
 
 
 }
