@@ -1,4 +1,5 @@
 import java.awt.Color
+import java.awt.image.Kernel
 
 /**
  * Class representing an individual in the population.
@@ -339,8 +340,45 @@ class Individual(private val image: ImageObject) {
         this.overallDeviation = sum
     }
     fun connectivityFitness() {
-        //TODO("Not yet implemented")
-        this.connectivity = 0.0
+        /**
+         * Measure of connectivity
+         */
+        val kernel = doubleArrayOf(
+            1/8.0, 1/8.0, 1/8.0,
+            1/8.0,   8.0, 1/8.0,
+            1/8.0, 1/8.0, 1/8.0)
+
+        var sum = 0.0
+        for (segment in this.segments) {
+            for (i in segment) {
+                // Top left
+                if ( (i-this.imgWidth-1) >= 0 && (i-this.imgWidth-1) !in segment)
+                    sum += kernel[0]
+                // Top
+                if ( (i-this.imgWidth) >= 0 && (i-this.imgWidth) !in segment)
+                    sum += kernel[1]
+                // Top right
+                if ( (i-this.imgWidth+1) >= 0 && (i-this.imgWidth+1) !in segment)
+                    sum += kernel[2]
+                // Left
+                if ( (i-1) >= 0 && (i-1) !in segment)
+                    sum += kernel[3]
+                // Right
+                if ( (i+1) >= 0 && (i+1) !in segment)
+                    sum += kernel[5]
+                // Bottom left
+                if ( (i+this.imgWidth-1) >= 0 && (i+this.imgWidth-1) !in segment)
+                    sum += kernel[6]
+                // Bottom
+                if ( (i+this.imgWidth) >= 0 && (i+this.imgWidth) !in segment)
+                    sum += kernel[7]
+                // Bottom right
+                if ( (i+this.imgWidth+1) >= 0 && (i+this.imgWidth+1) !in segment)
+                    sum += kernel[8]
+            }
+        }
+
+        this.connectivity = sum
     }
     fun edgeFitness() {
         /**
@@ -367,19 +405,19 @@ class Individual(private val image: ImageObject) {
 
     fun printInfo() {
         println("\nIndividual:")
-        print("\tChromosome:")
-        for (i in this.chromosome.indices) {
-            if (i % this.imgWidth == 0)
-                println()
-            print("\t%-6s".format(this.chromosome[i]))
-        }
-        println("\n")
-
+        //print("\tChromosome:")
+        //for (i in this.chromosome.indices) {
+        //    if (i % this.imgWidth == 0)
+        //        println()
+        //    print("\t%-6s".format(this.chromosome[i]))
+        //}
+        //println("\n")
+        println("\tSegments: ${this.segments.size}")
         println("\tFitness:")
         println("\t\tEdge: $edgeValue")
         println("\t\tConnectivity: $connectivity")
         println("\t\tOverall Deviation: $overallDeviation")
-        println("\tSegments: ${this.segments.toList()}")
-        println("\tSegments mu: ${this.segments_mu.toList()}")
+
+        // println("\tSegments mu: ${this.segments_mu.toList()}")
     }
 }

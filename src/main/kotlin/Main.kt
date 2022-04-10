@@ -1,3 +1,4 @@
+import java.awt.image.Kernel
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.system.measureTimeMillis
@@ -18,10 +19,13 @@ fun main(args: Array<String>) {
     val GA = GeneticAlgorithm(image)
     measureTimeMillis {
         GA.population.individuals[0].createSegments()
+        GA.population.individuals[0].calculateFitnesses()
+        GA.population.individuals[0].printInfo()
 
     }.let {
         println("Time taken: $it ms, ${it / 1000} s")
     }
+
 
     // GA.run()
     // println(GA.population.individuals[0].segment_mu)
