@@ -15,16 +15,15 @@ class Individual(private val image: ImageObject) {
     private val geneSize = imgHeight * imgWidth
 
     // Objective functions
-    val overallDeviation: Double = 0.0
-    val connectivity: Double = 0.0
-    val edgeValue: Double = 0.0
+    var overallDeviation: Double = 0.0
+    var connectivity: Double = 0.0
+    var edgeValue: Double = 0.0
 
     val rank: Int = 0
 
-
     val chromosome: Array<Direction> = construction()
-    val segments: ArrayList<MutableList<Int>> = createSegments()
-    val segment_mu: ArrayList<Color>  = averageSegmentColor()
+    val segments: ArrayList<MutableSet<Int>> = createSegments()
+    val segments_mu: ArrayList<List<Int>>  = averageSegmentColor()
 
 
     private fun construction(): Array<Direction> {
@@ -36,13 +35,13 @@ class Individual(private val image: ImageObject) {
         /*val test = Array(geneSize) { Direction.NONE }
         test[0] = Direction.RIGHT
         test[1] = Direction.RIGHT
-        test[2] = Direction.LEFT
-        test[3] = Direction.UP
+        test[2] = Direction.DOWN
+        test[3] = Direction.DOWN
         test[4] = Direction.LEFT
-        test[5] = Direction.UP
+        test[5] = Direction.NONE
         test[6] = Direction.RIGHT
         test[7] = Direction.RIGHT
-        test[8] = Direction.LEFT
+        test[8] = Direction.RIGHT
          */
 
         return correctChromosome(randChromosome)
@@ -78,8 +77,126 @@ class Individual(private val image: ImageObject) {
         return legalMoves.toTypedArray()
     }
 
-    fun createSegments(): ArrayList<MutableList<Int>> {
+
+    fun createSegments(): ArrayList<MutableSet<Int>> {
         /**
+         * Creates the segments of the image by traversing the graph connecting the pixels
+         * Does not pay attention to the direction of the edges.
+         */
+        val segments = ArrayList<MutableSet<Int>>()
+        val unvisitedNodes = MutableList(geneSize) { it }
+
+        while (unvisitedNodes.isNotEmpty()) {
+            val node = unvisitedNodes.removeFirst()
+
+            val segment = getConnectedNodes(node)
+            if (segment.isEmpty())
+                segments.add(mutableSetOf(node))
+            else
+                segments.add(segment)
+
+            unvisitedNodes.removeAll(segment)
+        }
+        return segments
+
+    }
+    fun getConnectedNodes(startPos: Int, visited: MutableSet<Int> = mutableSetOf<Int>()): MutableSet<Int> {
+        val connections = mutableSetOf<Int>()
+
+        //if (chromosome[startPos] == Direction.NONE) {
+        //    return connections.toMutableList()
+        //}
+        var i = startPos
+        if (i !in visited)
+            connections.add(i)
+
+        //println()
+
+        do {
+            val next = getNextNode(i)
+            visited.add(i)
+
+            //println("Standing in node: $i")
+            //println("\tVisited: ${visited.toList()}")
+            //println("\tConnections: ${connections.toList()}")
+            //println("\tNext node: $next")
+
+            // If the node on the left points RIGHT
+            if ((i - 1) >= 0) {
+                if (chromosome[i-1] == Direction.RIGHT && i-1 !in visited)  // not visited before
+                    connections.add(i-1)
+            }
+            // If the node on the right points LEFT
+            if ((i + 1) < this.geneSize ) {
+                if (chromosome[i + 1] == Direction.LEFT && i+1 !in visited)
+                    connections.add(i + 1)
+
+            }
+            // If the node on the top points DOWN
+            if ((i - this.imgWidth) >= 0) {
+                if (chromosome[i - this.imgWidth] == Direction.DOWN && i-this.imgWidth !in visited)
+                    connections.add(i - this.imgWidth)
+            }
+            // If the node on the bottom points UP
+            if ((i + this.imgWidth) < this.geneSize) {
+                if (chromosome[i + this.imgWidth] == Direction.UP && i+this.imgWidth !in visited)
+                    connections.add(i + this.imgWidth)
+            }
+
+            if (next in visited) {
+                if (connections.size == 1)
+                    return connections
+                else
+                    break
+            }
+            // If the next node was not added, add it
+            if (next !in connections)
+                connections.add(next)
+
+            i = next
+        } while (chromosome[next] != Direction.NONE && next !in visited)
+
+        //println("Connections made: ${connections.toList()}")
+        //println("Visited nodes: ${visited.toList()}")
+
+        val unexploredConnections = connections.subtract(visited)
+
+        //println("Unexplored connections: ${unexploredConnections.toList()}")
+        for (node in unexploredConnections) {
+            //println("\tExploring node: $node")
+            val newNodes = getConnectedNodes(node, visited)
+            //println("\tFrom exploring node: $node, new nodes found: ${newNodes.toList()}")
+            connections.addAll(newNodes)
+        }
+
+        return connections //.toMutableList()
+    }
+    fun averageSegmentColor(): ArrayList<List<Int>> {
+        /**
+         * Calculates the average color of each segment.
+         * Returns a hashmap with the segment number as key and the color as value.
+         */
+        val segmentColors = ArrayList<List<Int>>()
+        for (segment in this.segments) {
+
+            var red = 0
+            var green = 0
+            var blue = 0
+            for (pixel in segment) {
+                val rgb = image.getPixel(pixel)
+                red += rgb[0]
+                green += rgb[1]
+                blue += rgb[2]
+            }
+            segmentColors.add(listOf(red / segment.size, green / segment.size, blue / segment.size))
+            //segmentColors.add(Color(red / segment.size, green / segment.size, blue / segment.size))
+        }
+        return segmentColors
+    }
+
+    fun createSegments2(): ArrayList<MutableList<Int>> {
+        /**
+         * OLD VERSION
          * Creates the segments of the image by traversing the graph connecting the pixels
          * Does not pay attention to the direction of the edges.
          */
@@ -89,7 +206,7 @@ class Individual(private val image: ImageObject) {
         while (unvisitedNodes.isNotEmpty()) {
             val node = unvisitedNodes.removeFirst()
 
-            val segment = getConnectedNodes(node)
+            val segment = getConnectedNodes2(node)
             if (segment.isEmpty())
                 segments.add(mutableListOf(node))
             else
@@ -100,28 +217,9 @@ class Individual(private val image: ImageObject) {
         return segments
         // this.segments.forEach { println(it) }
     }
-    fun averageSegmentColor(): ArrayList<Color> {
+    private fun getConnectedNodes2(i: Int, visited: MutableList<Int> = mutableListOf()): MutableList<Int> {
         /**
-         * Calculates the average color of each segment.
-         */
-        val segmentColors = ArrayList<Color>()
-        for (segment in this.segments) {
-            var red = 0
-            var green = 0
-            var blue = 0
-            for (pixel in segment) {
-                val rgb = image.getPixel(pixel)
-                red += rgb[0]
-                green += rgb[1]
-                blue += rgb[2]
-            }
-            segmentColors.add(Color(red / segment.size, green / segment.size, blue / segment.size))
-        }
-        return segmentColors
-    }
-
-    private fun getConnectedNodes(i: Int, visited: MutableList<Int> = mutableListOf()): MutableList<Int> {
-        /**
+         * OLD VERSION
          * Returns the connected nodes of the given start node.
          */
         val connections = ArrayList<Int>()
@@ -184,7 +282,7 @@ class Individual(private val image: ImageObject) {
         for (node in connections) {
             //println("\tCalled with $node, visited: ${visited.toList()}")
 
-            val childConnections = getConnectedNodes(node, visited)
+            val childConnections = getConnectedNodes2(node, visited)
             newConnections.addAll(childConnections)
 
             // Add new connections to visited list
@@ -209,35 +307,79 @@ class Individual(private val image: ImageObject) {
         }
     }
 
-
     fun crossover(parentB: Individual): Individual {
         TODO("Not yet implemented")
     }
-
     fun mutate(mutationRate: Double) {
         TODO("Not yet implemented")
     }
 
     fun calculateFitnesses() {
         // Calculate the fitness for each objective
-        TODO("Not yet implemented")
+        this.edgeFitness()
+        this.connectivityFitness()
+        this.overallDeviationFitness()
     }
-    fun connectivityFitness(): Double {
-        return 0.0
+    fun overallDeviationFitness() {
+        /**
+         * Measure of similarity in each segment
+         * TODO: Investigate if calculating the distance for each color independently is more correct
+         */
+        var sum = 0.0
+        for (segmentIdx in this.segments.indices) {
+            val mu_rgb = this.segments_mu[segmentIdx]
+            val segment = this.segments[segmentIdx]
+
+            // The distance between the mean and every pixel in the segment
+            for (i in segment) {
+                val rgb_i = this.image.getPixel(i)
+                sum += image.distance(rgb_i, mu_rgb)
+            }
+        }
+        this.overallDeviation = sum
     }
-    fun edgeFitness(): Double {
+    fun connectivityFitness() {
+        //TODO("Not yet implemented")
+        this.connectivity = 0.0
+    }
+    fun edgeFitness() {
+        /**
+         * Measures the clearness of the boundaries in the image.
+         * Should be maximized but to keep the similarity between the objectives,
+         *    it is minimized here by negating it.
+         */
         var sum = 0.0
         for (segment in this.segments) {
 
-            TODO("WHERE EIVIND LEFT OFF")
-
-
+            for (i in segment) {
+                // If the node on the RIGHT is in a different segment
+                if (i + 1 < this.geneSize && i+1 !in segment) {
+                    sum += image.distance(i, i+1)
+                }
+                // If the node UNDER is in a different segment
+                if (i + this.imgWidth < this.geneSize && i+this.imgWidth !in segment) {
+                    sum += image.distance(i, i+this.imgWidth)
+                }
+            }
         }
-        return 0.0
-    }
-    fun dist(): Double {
-
-        return 0.0
+        this.edgeValue = sum
     }
 
+    fun printInfo() {
+        println("\nIndividual:")
+        print("\tChromosome:")
+        for (i in this.chromosome.indices) {
+            if (i % this.imgWidth == 0)
+                println()
+            print("\t%-6s".format(this.chromosome[i]))
+        }
+        println("\n")
+
+        println("\tFitness:")
+        println("\t\tEdge: $edgeValue")
+        println("\t\tConnectivity: $connectivity")
+        println("\t\tOverall Deviation: $overallDeviation")
+        println("\tSegments: ${this.segments.toList()}")
+        println("\tSegments mu: ${this.segments_mu.toList()}")
+    }
 }

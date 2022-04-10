@@ -1,3 +1,4 @@
+import java.awt.image.Kernel
 import java.awt.image.Raster
 import java.io.File
 import javax.imageio.ImageIO
@@ -8,10 +9,12 @@ import javax.imageio.ImageIO
  */
 class ImageObject(file: File) {
     private val image: Raster = this.load(file)
-    // private val imageDistances =
+    // TODO: Maybe add some image processing options, like blurring,
 
     private fun load(file: File): Raster {
         val image = ImageIO.read(file).raster
+        //val image = ImageIO.read(file).raster.createChild(0, 0, 3, 3, 0, 0, null)
+
         val width = image.width
         val height = image.height
         val channels = image.numBands
@@ -24,17 +27,35 @@ class ImageObject(file: File) {
         return Pair(x, y)
     }
     fun distance(a: Int, b: Int): Double {
+        /**
+         * The Euclidean distance between two pixels in RGB space,
+         * but first converts two positions to rgb
+         */
         val pixel_1 = toPixelPair(a)
         val pixel_2 = toPixelPair(b)
         val rgb_1 = getPixel(pixel_1.first, pixel_1.second)
         val rgb_2 = getPixel(pixel_2.first, pixel_2.second)
+        return distance(rgb_1, rgb_2)
+    }
+    fun distance(rgb1: List<Int>, rgb2: List<Int>): Double {
+        /**
+         * The Euclidean distance between two pixels in RGB space
+         */
         var sum = 0.0
         for (i in 0 until 3) {
-            val diff = rgb_1[i] - rgb_2[i]
+            val diff = rgb1[i] - rgb2[i]
             val square = diff * diff
             sum += square
         }
         return Math.sqrt(sum)
+    }
+
+    fun getPixelNeighbours(n: Int, kernel: Kernel) {
+        /**
+         * Get the pixel neighbours in a kernel
+         */
+        TODO("Not implemented. Useful for connectivity measure")
+
     }
     fun getHeight(): Int {
         return image.height
