@@ -121,6 +121,10 @@ class Population(private var populationSize: Int,
         parents.addAll(newPopulation)
     }
     fun createOffspring(mutationRate:Double) {
+        /**
+         * Creates the offspring of the parents.
+         * TODO: make it proper
+         */
         val newPopulation = ArrayList<Individual>()
         while (newPopulation.size < populationSize) {
             val parent1 = parents[0]
