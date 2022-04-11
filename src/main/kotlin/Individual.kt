@@ -79,7 +79,6 @@ class Individual(private val image: ImageObject) {
         return legalMoves.toTypedArray()
     }
 
-
     fun createSegments(): ArrayList<MutableSet<Int>> {
         /**
          * Creates the segments of the image by traversing the graph connecting the pixels
@@ -208,19 +207,27 @@ class Individual(private val image: ImageObject) {
     }
 
     fun crossover(parentB: Individual): Individual {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
+        return parentB
     }
     fun mutate(mutationRate: Double) {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
     }
 
+    fun crowdingTournamentSelection(other: Individual): Individual {
+        return if (this.rank < other.rank)
+            this
+        else if (this.rank > other.rank)
+            other
+        else if (this.crowdingDistance > other.crowdingDistance)
+            this
+        else
+            other
+    }
     fun dominates(other: Individual): Boolean {
         return this.connectivity < other.connectivity
                 && this.edgeValue < other.edgeValue
                 && this.overallDeviation < other.overallDeviation
-    }
-    fun assignCrowdingDistance(crowdingDistance: Double) {
-        this.crowdingDistance = crowdingDistance
     }
     fun assignRank(rank: Int) {
         this.rank = rank
