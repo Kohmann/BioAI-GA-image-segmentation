@@ -1,3 +1,4 @@
+import kotlin.random.Random
 
 class Population(private var populationSize: Int,
                  image: ImageObject) {
@@ -120,20 +121,36 @@ class Population(private var populationSize: Int,
         parents.clear()
         parents.addAll(newPopulation)
     }
-    fun createOffspring(mutationRate:Double) {
+    fun createOffspring(mutationRate:Double, crossoverRate:Double) {
         /**
          * Creates the offspring of the parents.
          * TODO: make it proper
          */
         val newPopulation = ArrayList<Individual>()
         while (newPopulation.size < populationSize) {
-            val parent1 = parents[0]
-            val parent2 = parents[1]
-            val child = parent1.crossover(parent2)
-            child.mutate(mutationRate)
-            newPopulation.add(child)
+            val parent1 = parents.random()
+            var parent2 = parents[1]
+            while (parent2 == parent1) parent2 = parents.random()
+
+            val children = crossover(parent1, parent2, crossoverRate)
+            children.forEach { it.mutate(mutationRate) }
+            newPopulation.addAll(children)
+
         }
         offspring.clear()
         offspring.addAll(newPopulation)
     }
+    fun crossover(p1: Individual,p2: Individual, crossoverRate:Double): ArrayList<Individual> {
+        /**
+         * Creates the offspring of the parents.
+         */
+        if (Random.nextFloat() < crossoverRate) {
+            val child1 = p1.crossover(p2)
+            val child2 = p2.crossover(p1)
+            return arrayListOf(child1, child2)
+        }
+        return arrayListOf(p1, p2)
+    }
+
+
 }
