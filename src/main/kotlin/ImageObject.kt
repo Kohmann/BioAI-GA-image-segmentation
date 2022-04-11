@@ -49,14 +49,6 @@ class ImageObject(file: File) {
         }
         return Math.sqrt(sum)
     }
-
-    fun getPixelNeighbours(n: Int, kernel: Kernel) {
-        /**
-         * Get the pixel neighbours in a kernel
-         */
-        TODO("Not implemented. Useful for connectivity measure")
-
-    }
     fun getHeight(): Int {
         return image.height
     }

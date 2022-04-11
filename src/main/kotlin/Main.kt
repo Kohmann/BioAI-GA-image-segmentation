@@ -18,9 +18,11 @@ fun main(args: Array<String>) {
     // starts the program and also times the execution
     val GA = GeneticAlgorithm(image)
     measureTimeMillis {
-        GA.population.individuals[0].createSegments()
-        GA.population.individuals[0].calculateFitnesses()
-        GA.population.individuals[0].printInfo()
+
+        GA.population.calculateFitness()
+        GA.population.assignRank()
+        GA.population.determineCrowdingDistance()
+        GA.population.individuals.forEach { it.printInfo() }
 
     }.let {
         println("Time taken: $it ms, ${it / 1000} s")

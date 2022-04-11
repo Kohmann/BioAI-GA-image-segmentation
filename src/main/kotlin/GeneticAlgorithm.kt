@@ -5,7 +5,7 @@
 class GeneticAlgorithm(image: ImageObject) {
 
     // PARAMETERS
-    private val populationSize: Int = 1
+    private val populationSize: Int = 6
     private val mutationRate: Double = 0.01
     private val numGenerations: Int = 10
 
@@ -16,6 +16,7 @@ class GeneticAlgorithm(image: ImageObject) {
     fun run() {
         repeat(numGenerations) {
             println("Generation: $generation")
+            population.calculateFitness()
             population.assignRank()
             population.selection()
             population.crossover()

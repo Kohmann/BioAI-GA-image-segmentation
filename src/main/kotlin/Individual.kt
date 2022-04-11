@@ -20,7 +20,8 @@ class Individual(private val image: ImageObject) {
     var connectivity: Double = 0.0
     var edgeValue: Double = 0.0
 
-    val rank: Int = 0
+    var rank: Int = 0
+    var crowdingDistance: Double = 0.0
 
     val chromosome: Array<Direction> = construction()
     val segments: ArrayList<MutableSet<Int>> = createSegments()
@@ -195,108 +196,6 @@ class Individual(private val image: ImageObject) {
         return segmentColors
     }
 
-    fun createSegments2(): ArrayList<MutableList<Int>> {
-        /**
-         * OLD VERSION
-         * Creates the segments of the image by traversing the graph connecting the pixels
-         * Does not pay attention to the direction of the edges.
-         */
-        val segments = ArrayList<MutableList<Int>>()
-        val unvisitedNodes = MutableList(geneSize) { it }
-
-        while (unvisitedNodes.isNotEmpty()) {
-            val node = unvisitedNodes.removeFirst()
-
-            val segment = getConnectedNodes2(node)
-            if (segment.isEmpty())
-                segments.add(mutableListOf(node))
-            else
-                segments.add(segment)
-
-            unvisitedNodes.removeAll(segment)
-        }
-        return segments
-        // this.segments.forEach { println(it) }
-    }
-    private fun getConnectedNodes2(i: Int, visited: MutableList<Int> = mutableListOf()): MutableList<Int> {
-        /**
-         * OLD VERSION
-         * Returns the connected nodes of the given start node.
-         */
-        val connections = ArrayList<Int>()
-
-        if (chromosome[i] == Direction.NONE) {
-            return connections
-        }
-
-        // If the node on the left points RIGHT
-        if ((i - 1) >= 0) {
-            if (chromosome[i-1] == Direction.RIGHT && i-1 !in visited)  // not visited before
-                connections.add(i-1)
-        }
-        // If the node on the right points LEFT
-        if ((i + 1) < this.geneSize ) {
-            if (chromosome[i + 1] == Direction.LEFT && i+1 !in visited) {
-                connections.add(i + 1)
-            }
-        }
-        // If the node on the top points DOWN
-        if ((i - this.imgWidth) / this.imgWidth != 0 && (i - this.imgWidth) >= 0) {
-            if (chromosome[i - this.imgWidth] == Direction.DOWN && i-this.imgWidth !in visited) {
-                connections.add(i - this.imgWidth)
-            }
-        }
-        // If the node on the bottom points UP
-        if ((i + this.imgWidth) < this.geneSize) {
-            if (chromosome[i + this.imgWidth] == Direction.UP && i+this.imgWidth !in visited) {
-                connections.add(i + this.imgWidth)
-            }
-        }
-
-
-        // The node it points to
-        val nextNode = getNextNode(i)
-
-        // If it is visited, dont add, else add
-        if (nextNode in visited) {
-            connections.remove(nextNode)
-        }
-        else { // only add of not already in the list
-            if (nextNode !in connections)
-                connections.add(nextNode)
-        }
-
-        // adds all new connections to visited list
-        for (node in connections) {
-            if (node !in visited) {
-                visited.add(node)
-            }
-        }
-
-        //print("$i, connections: ${connections.toList()}")
-        //println(", visited nodes: ${visited.toList()}")
-
-        // stores the new connections made in this call
-        val newConnections = connections.toMutableList()
-
-        // Loops through all the connections and continue to find more connections, recursively
-        for (node in connections) {
-            //println("\tCalled with $node, visited: ${visited.toList()}")
-
-            val childConnections = getConnectedNodes2(node, visited)
-            newConnections.addAll(childConnections)
-
-            // Add new connections to visited list
-            for (node in newConnections) {
-                if (node !in visited) {
-                    visited.add(node)
-                }
-            }
-            //println("\t\t$i, childConnections returned from $node: ${childConnections.toList()}. all connections: ${newConnections.toList()}")
-        }
-        //println("\tFinal: $i, connections: ${newConnections.toList()}")
-        return newConnections
-    }
     private fun getNextNode(i: Int): Int {
         // Return the index to the node it points to
         return when (chromosome[i]) {
@@ -315,11 +214,25 @@ class Individual(private val image: ImageObject) {
         TODO("Not yet implemented")
     }
 
+    fun dominates(other: Individual): Boolean {
+        return this.connectivity < other.connectivity
+                && this.edgeValue < other.edgeValue
+                && this.overallDeviation < other.overallDeviation
+    }
+    fun assignCrowdingDistance(crowdingDistance: Double) {
+        this.crowdingDistance = crowdingDistance
+    }
+    fun assignRank(rank: Int) {
+        this.rank = rank
+    }
     fun calculateFitnesses() {
         // Calculate the fitness for each objective
         this.edgeFitness()
         this.connectivityFitness()
         this.overallDeviationFitness()
+    }
+    fun fitnesses(): List<Double> {
+        return listOf(this.edgeValue, this.connectivity, this.overallDeviation)
     }
     fun overallDeviationFitness() {
         /**
@@ -413,6 +326,8 @@ class Individual(private val image: ImageObject) {
         //}
         //println("\n")
         println("\tSegments: ${this.segments.size}")
+        println("\tRank: ${this.rank}")
+        println("\tCrowding distance: ${this.crowdingDistance}")
         println("\tFitness:")
         println("\t\tEdge: $edgeValue")
         println("\t\tConnectivity: $connectivity")
