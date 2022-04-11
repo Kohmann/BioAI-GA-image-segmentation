@@ -1,5 +1,6 @@
 import java.awt.Color
 import java.awt.image.Kernel
+import kotlin.random.Random
 
 /**
  * Class representing an individual in the population.
@@ -208,10 +209,42 @@ class Individual(private val image: ImageObject) {
 
     fun crossover(parentB: Individual): Individual {
         // TODO("Not yet implemented")
+
+        return parentB
+    }
+    fun joinSegments(parentB: Individual): Individual {
+
+
         return parentB
     }
     fun mutate(mutationRate: Double) {
-        //TODO("Not yet implemented")
+        /**
+         * Mutates the chromosome at random.
+         * More implementation to come.
+         */
+        when (Random.nextInt(0,1)) {
+            0 -> randomMutation(mutationRate)
+            // TODO("Add more mutation methods")
+            else -> randomMutation(mutationRate)
+        }
+    }
+    fun randomMutation(mutationRate: Double) {
+        val possibleDirections = setOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
+        for (i in chromosome.indices) {
+            if (Random.nextDouble() < mutationRate) // chance of mutation to a new direction
+                chromosome[i] =  possibleDirections.subtract(setOf(chromosome[i])).random() // Only new directions
+        }
+    }
+    fun mergeSegments() {
+        /**
+         * Merges two touching segments into one.
+         */
+        val idx = Random.nextInt(0, segments.size-1)
+        val segment1 = segments.removeAt(idx)
+        val segment2 = segments.removeAt(idx+1) // should be a neighbouring segment
+        segment1.addAll(segment2)
+        segments.add(segment1)
+        TODO("Problem arise when trying to translate a list of segments back into a chromosome")
     }
 
     fun crowdingTournamentSelection(other: Individual): Individual {

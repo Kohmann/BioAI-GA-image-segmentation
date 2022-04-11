@@ -6,7 +6,8 @@ class GeneticAlgorithm(image: ImageObject) {
 
     // PARAMETERS
     private val populationSize: Int = 10
-    private val mutationRate: Double = 0.01
+    private val mutationRate: Double = 0.005
+    private val crossoverRate: Double = 0.7
     private val numGenerations: Int = 10
 
 
@@ -24,7 +25,7 @@ class GeneticAlgorithm(image: ImageObject) {
             population.assignRank()
 
             population.selection() // finds all parent candidates
-            population.createOffspring(mutationRate)
+            population.createOffspring(mutationRate, crossoverRate)
 
             generation++
         }
