@@ -36,7 +36,7 @@ class Population(private var populationSize: Int,
         val rankedIndividuals = ArrayList<ArrayList<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
             val dominatingSet = findDominatingSet(unassignedIndividuals)
-            println("Dominating set: ${dominatingSet.size}")
+            //println("Dominating set: ${dominatingSet.size}")
             dominatingSet.forEach { it.assignRank(rank) }
             unassignedIndividuals.removeAll(dominatingSet)
             rankedIndividuals.add(dominatingSet) // adds each panotofront to rankedIndividuals
@@ -140,16 +140,15 @@ class Population(private var populationSize: Int,
         offspring.clear()
         offspring.addAll(newPopulation)
     }
-    fun crossover(p1: Individual,p2: Individual, crossoverRate:Double): ArrayList<Individual> {
+    fun crossover(p1: Individual,p2: Individual, crossoverRate:Double): Array<Individual> {
         /**
          * Creates the offspring of the parents.
          */
         if (Random.nextFloat() < crossoverRate) {
-            val child1 = p1.crossover(p2)
-            val child2 = p2.crossover(p1)
-            return arrayListOf(child1, child2)
+            val children = p1.crossover(p2)
+            return children
         }
-        return arrayListOf(p1, p2)
+        return arrayOf(p1, p2)
     }
 
 

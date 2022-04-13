@@ -10,7 +10,10 @@ enum class Direction {
     LEFT, RIGHT, UP, DOWN, NONE
 }
 
-class Individual(private val image: ImageObject) {
+class Individual(private val image: ImageObject,
+                 private val weightedObjectives: List<Double> = listOf(),
+                 initChromosome: Array<Direction> = Array(0){ Direction.NONE }) {
+
     // Image information
     private val imgWidth = image.getWidth()
     private val imgHeight = image.getHeight()
@@ -20,13 +23,14 @@ class Individual(private val image: ImageObject) {
     var overallDeviation: Double = 0.0
     var connectivity: Double = 0.0
     var edgeValue: Double = 0.0
+    var weightedFitness: Double = 0.0
 
     var rank: Int = 0
     var crowdingDistance: Double = 0.0
 
-    val chromosome: Array<Direction> = construction()
-    val segments: ArrayList<MutableSet<Int>> = createSegments()
-    val segments_mu: ArrayList<List<Int>>  = averageSegmentColor()
+    private val chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
+    private val segments: ArrayList<MutableSet<Int>> = createSegments()
+    private val segments_mu: ArrayList<List<Int>>  = averageSegmentColor()
 
 
     private fun construction(): Array<Direction> {
@@ -47,7 +51,7 @@ class Individual(private val image: ImageObject) {
         test[8] = Direction.RIGHT
          */
 
-        return correctChromosome(randChromosome)
+        return randChromosome //correctChromosome(randChromosome)
     }
     private fun correctChromosome(chromosome: Array<Direction>): Array<Direction> {
         /**
@@ -85,6 +89,9 @@ class Individual(private val image: ImageObject) {
          * Creates the segments of the image by traversing the graph connecting the pixels
          * Does not pay attention to the direction of the edges.
          */
+        // First, correct the chromosome
+        this.correctChromosome(this.chromosome)
+
         val segments = ArrayList<MutableSet<Int>>()
         val unvisitedNodes = MutableList(geneSize) { it }
 
@@ -207,16 +214,34 @@ class Individual(private val image: ImageObject) {
         }
     }
 
-    fun crossover(parentB: Individual): Individual {
-        // TODO("Not yet implemented")
+    fun crossover(parentB: Individual): Array<Individual> {
+        /**
+         * Crossover two individuals.
+         * Returns a list of two new individuals.
+         * More crossovers to come
+         */
+        return uniformCrossover(parentB)
+    }
+    fun uniformCrossover(parentB: Individual): Array<Individual> {
+        val chromosomeA = this.chromosome.clone()
+        val chromosomeB = parentB.chromosome.clone()
 
-        return parentB
+        for (i in 0 until this.geneSize) {
+            if (Random.nextDouble() < 0.5)
+                chromosomeA[i] = parentB.chromosome[i]
+            else
+                chromosomeB[i] = this.chromosome[i]
+        }
+
+        return arrayOf(Individual(this.image, initChromosome = chromosomeA), Individual(this.image, initChromosome = chromosomeB))
     }
     fun joinSegments(parentB: Individual): Individual {
-
-
+        /**
+         * Possible future crossover method:
+         */
         return parentB
     }
+
     fun mutate(mutationRate: Double) {
         /**
          * Mutates the chromosome at random.
@@ -234,17 +259,6 @@ class Individual(private val image: ImageObject) {
             if (Random.nextDouble() < mutationRate) // chance of mutation to a new direction
                 chromosome[i] =  possibleDirections.subtract(setOf(chromosome[i])).random() // Only new directions
         }
-    }
-    fun mergeSegments() {
-        /**
-         * Merges two touching segments into one.
-         */
-        val idx = Random.nextInt(0, segments.size-1)
-        val segment1 = segments.removeAt(idx)
-        val segment2 = segments.removeAt(idx+1) // should be a neighbouring segment
-        segment1.addAll(segment2)
-        segments.add(segment1)
-        TODO("Problem arise when trying to translate a list of segments back into a chromosome")
     }
 
     fun crowdingTournamentSelection(other: Individual): Individual {
@@ -270,6 +284,15 @@ class Individual(private val image: ImageObject) {
         this.edgeFitness()
         this.connectivityFitness()
         this.overallDeviationFitness()
+        // if weights for the objectives are determined
+        if (this.weightedObjectives.isNotEmpty())
+            this.weightedFitness = this.combinedFitness()
+    }
+    fun combinedFitness(): Double {
+        return this.edgeValue * this.weightedObjectives[0] +
+                this.connectivity * this.weightedObjectives[1] +
+                this.overallDeviation * this.weightedObjectives[2]
+
     }
     fun fitnesses(): List<Double> {
         return listOf(this.edgeValue, this.connectivity, this.overallDeviation)

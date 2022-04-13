@@ -16,13 +16,13 @@ fun main(args: Array<String>) {
     val image = ImageObject(File(imgPath))
 
     // starts the program and also times the execution
+    val GA = GeneticAlgorithm(image)
     measureTimeMillis {
-        val GA = GeneticAlgorithm(image)
         GA.runNSGA()
+
     }.let {
         println("Time taken: $it ms, ${it / 1000} s")
     }
-
 
     // GA.run()
     // println(GA.population.individuals[0].segment_mu)
