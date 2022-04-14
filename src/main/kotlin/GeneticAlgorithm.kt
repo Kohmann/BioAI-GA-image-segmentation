@@ -5,10 +5,11 @@
 class GeneticAlgorithm(image: ImageObject) {
 
     // PARAMETERS
-    private val populationSize: Int = 20
-    private val mutationRate: Double = 0.005
-    private val crossoverRate: Double = 0.7
-    private val numGenerations: Int = 100
+    var params = Parameters()
+    private val populationSize: Int = params.populationSize
+    private val mutationRate: Double = params.mutationRate
+    private val crossoverRate: Double = params.crossoverRate
+    private val numGenerations: Int = params.numGenerations
 
 
     val population = Population(populationSize, image)
@@ -29,14 +30,15 @@ class GeneticAlgorithm(image: ImageObject) {
 
             generation++
         }
+        population.combineWithOffspring()
         population.calculateFitness()
         population.assignRank()
-        println("Best connectivity individuals: ${population.individuals.forEach { if (it.rank == 1)
-            println(it.connectivity)
-        }}")
-        println("Best fitness individuals: ${population.individuals.forEach { if (it.rank == 1)
-            println(it.printInfo())
-        }}")
+        println("Best connectivity individuals:")
+        population.individuals.forEach {
+            if (it.rank == 1)
+                it.printInfo()
+        }
+
     }
 
 }

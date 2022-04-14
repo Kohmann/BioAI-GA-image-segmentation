@@ -13,7 +13,7 @@ class ImageObject(file: File) {
 
     private fun load(file: File): Raster {
         val image = ImageIO.read(file).raster
-        //val image = ImageIO.read(file).raster.createChild(0, 0, 3, 3, 0, 0, null)
+        //val image = ImageIO.read(file).raster.createChild(0, 0, 10, 10, 0, 0, null)
 
         val width = image.width
         val height = image.height

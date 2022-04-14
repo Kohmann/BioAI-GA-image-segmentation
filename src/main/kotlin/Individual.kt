@@ -1,6 +1,8 @@
-import java.awt.Color
-import java.awt.image.Kernel
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 import kotlin.random.Random
+import kotlin.random.nextInt
 
 /**
  * Class representing an individual in the population.
@@ -11,9 +13,9 @@ enum class Direction {
 }
 
 class Individual(private val image: ImageObject,
-                 private val weightedObjectives: List<Double> = listOf(),
                  initChromosome: Array<Direction> = Array(0){ Direction.NONE }) {
 
+    private val params = Parameters()
     // Image information
     private val imgWidth = image.getWidth()
     private val imgHeight = image.getHeight()
@@ -34,25 +36,84 @@ class Individual(private val image: ImageObject,
 
 
     private fun construction(): Array<Direction> {
-        // TODO: Implement heuristic construction of the chromosome. Now it's just random.
-        // Like Minimal Spanding Tree, use Prims algorithm
-        val possibleDirections = listOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
-        val randChromosome = Array(geneSize) { possibleDirections.random() }
-        // test chromosome
-        /*val test = Array(geneSize) { Direction.NONE }
-        test[0] = Direction.RIGHT
-        test[1] = Direction.RIGHT
-        test[2] = Direction.DOWN
-        test[3] = Direction.DOWN
-        test[4] = Direction.LEFT
-        test[5] = Direction.NONE
-        test[6] = Direction.RIGHT
-        test[7] = Direction.RIGHT
-        test[8] = Direction.RIGHT
+        /**
+         * Initialize the chromosome with random directions or using Minimal Spanning Tree algorithm.
          */
+        val possibleDirections = listOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
 
-        return randChromosome //correctChromosome(randChromosome)
+        return if (params.useMST)
+            primMST()
+        else
+            Array(geneSize) { possibleDirections.random() } // random initialization
     }
+
+    private fun primMST(): Array<Direction> {
+        /**
+         * Prim's algorithm, used to find the minimal spanning tree
+         */
+        var pos = Random.nextInt(0 until imgWidth * imgHeight)
+        val initChromosome = Array(geneSize) { Direction.NONE }
+        val visited = HashSet<Int>()
+        val heap = PriorityQueue<Edge>()
+
+        while (visited.size < geneSize){
+            if (pos !in visited) {
+                visited.add(pos)
+                //println("\tAddingEdges: from $pos")
+                getNeighbors(pos).forEach { n ->
+                    if (n !in visited) {
+                        val edge = Edge(pos, n, image.distance(pos, n))
+                        //println("\t\t to $n ${edge.weight}")
+                        heap.add(edge)
+                    } }
+            }
+            val bestEdge = heap.poll() // Get the edge with the minimal distance
+            //print("\t\tBest edge ${bestEdge.from} -> ${bestEdge.to}, Distance: ${bestEdge.weight}")
+            initChromosome[bestEdge.to] = setDirection(bestEdge.from, bestEdge.to) // Set the direction of the 'to' node
+            //println("  Direction: ${chromosome[bestEdge.to]}")
+            pos = bestEdge.to
+        }
+        // Display chromosome
+        //for (i in initChromosome.indices) {
+        //    if (i % imgWidth == 0) println()
+        //    print("%-5s  ".format(initChromosome[i]))
+        //   }
+
+        return initChromosome
+    }
+    private fun setDirection(from: Int, to: Int): Direction {
+        return if (from -1 == to) {
+            Direction.RIGHT
+        } else if (from + 1 == to) {
+            Direction.LEFT
+        } else if (from - imgWidth == to) {
+            Direction.DOWN
+        } else if (from + imgWidth == to) {
+            Direction.UP
+        } else { // from == to
+            Direction.NONE
+        }
+
+    }
+    private fun getNeighbors(pos: Int): List<Int> {
+        val neighbors = ArrayList<Int>()
+        val x = pos % imgWidth
+        val y = pos / imgWidth
+        if (x > 0) {
+            neighbors.add(pos - 1)
+        }
+        if (x < imgWidth - 1) {
+            neighbors.add(pos + 1)
+        }
+        if (y > 0) {
+            neighbors.add(pos - imgWidth)
+        }
+        if (y < imgHeight - 1) {
+            neighbors.add(pos + imgWidth)
+        }
+        return neighbors
+    }
+
     private fun correctChromosome(chromosome: Array<Direction>): Array<Direction> {
         /**
          * Corrects the chromosome by replacing illegal directions with a legal one.
@@ -83,6 +144,7 @@ class Individual(private val image: ImageObject,
         legalMoves.add(Direction.NONE)
         return legalMoves.toTypedArray()
     }
+
 
     fun createSegments(): ArrayList<MutableSet<Int>> {
         /**
@@ -285,13 +347,13 @@ class Individual(private val image: ImageObject,
         this.connectivityFitness()
         this.overallDeviationFitness()
         // if weights for the objectives are determined
-        if (this.weightedObjectives.isNotEmpty())
+        if (this.params.simpleGA)
             this.weightedFitness = this.combinedFitness()
     }
     fun combinedFitness(): Double {
-        return this.edgeValue * this.weightedObjectives[0] +
-                this.connectivity * this.weightedObjectives[1] +
-                this.overallDeviation * this.weightedObjectives[2]
+        return this.edgeValue * this.params.edgeWeight +
+                this.connectivity * this.params.connectivityWeight +
+                this.overallDeviation * this.params.deviationWeight
 
     }
     fun fitnesses(): List<Double> {
@@ -381,21 +443,11 @@ class Individual(private val image: ImageObject,
 
     fun printInfo() {
         println("\nIndividual:")
-        //print("\tChromosome:")
-        //for (i in this.chromosome.indices) {
-        //    if (i % this.imgWidth == 0)
-        //        println()
-        //    print("\t%-6s".format(this.chromosome[i]))
-        //}
-        //println("\n")
         println("\tSegments: ${this.segments.size}")
         println("\tRank: ${this.rank}")
-        println("\tCrowding distance: ${this.crowdingDistance}")
         println("\tFitness:")
-        println("\t\tEdge: $edgeValue")
-        println("\t\tConnectivity: $connectivity")
-        println("\t\tOverall Deviation: $overallDeviation")
-
-        // println("\tSegments mu: ${this.segments_mu.toList()}")
+        println("\t\tEdge: %.4f".format(edgeValue.toFloat()))
+        println("\t\tConnectivity: %.4f".format(connectivity.toFloat()))
+        println("\t\tOverall Deviation: %.4f".format(overallDeviation.toFloat()))
     }
 }
