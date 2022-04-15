@@ -1,3 +1,5 @@
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.awt.image.Kernel
 import java.awt.image.Raster
 import java.io.File
@@ -12,8 +14,8 @@ class ImageObject(file: File) {
     // TODO: Maybe add some image processing options, like blurring,
 
     private fun load(file: File): Raster {
-        val image = ImageIO.read(file).raster
-        //val image = ImageIO.read(file).raster.createChild(0, 0, 10, 10, 0, 0, null)
+        //val image = ImageIO.read(file).raster
+        val image = ImageIO.read(file).raster.createChild(0, 0, 10, 5, 0, 0, null)
 
         val width = image.width
         val height = image.height
@@ -71,4 +73,34 @@ class ImageObject(file: File) {
         return image.getPixel(x, y, IntArray(image.numBands)).toList()
     }
 
+    fun save(filepath: String, solution: Individual, mode: String) {
+        /**
+         * Saves the image to a file
+         * filepath: String containing the path to the folder where the image should be saved
+         * solution: ArrayList of MutableSets containing the indices of the pixels that should be painted
+         * mode:
+         *  - "black" - white background with black edges
+         *  - "green" - RGB image with green edges
+         */
+        val fileName = File(filepath) // correct to
+        val img = BufferedImage (image.width, image.height, BufferedImage.TYPE_INT_RGB)
+
+        val edgeColor = when (mode) {
+            "black" -> Color.BLACK
+            "green" -> Color.GREEN
+            else -> Color.BLACK
+        }
+        for (i in 0 until image.width * image.height) {
+            val pixel = toPixelPair(i)
+            if (solution.isEdge(i)) {
+                img.setRGB(i % image.width, i / image.width, edgeColor.rgb)
+            } else {
+                img.setRGB(i % image.width, i / image.width, Color.WHITE.rgb)
+            }
+
+        }
+        //ImageIO.write(img, "jpg", fileName)
+
+
+    }
 }

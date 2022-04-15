@@ -275,6 +275,13 @@ class Individual(private val image: ImageObject,
             else -> i
         }
     }
+    fun isEdge(i: Int): Boolean {
+        // Return true if the node has neighbours in another segment
+        val commonSegment = segments.single { it.contains(i) }
+        return if (i + 1 !in commonSegment && i + 1 < this.geneSize)
+            true
+        else i + this.imgWidth !in commonSegment && i + this.imgWidth < this.geneSize
+    }
 
     fun crossover(parentB: Individual): Array<Individual> {
         /**
