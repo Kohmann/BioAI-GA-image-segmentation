@@ -31,7 +31,7 @@ class Individual(private val image: ImageObject,
     var crowdingDistance: Double = 0.0
 
     private val chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
-    private val segments: ArrayList<MutableSet<Int>> = createSegments()
+    val segments: ArrayList<MutableSet<Int>> = createSegments()
     private val segments_mu: ArrayList<List<Int>>  = averageSegmentColor()
 
 
@@ -282,7 +282,9 @@ class Individual(private val image: ImageObject,
          * Returns a list of two new individuals.
          * More crossovers to come
          */
+
         return uniformCrossover(parentB)
+
     }
     fun uniformCrossover(parentB: Individual): Array<Individual> {
         val chromosomeA = this.chromosome.clone()
@@ -297,11 +299,28 @@ class Individual(private val image: ImageObject,
 
         return arrayOf(Individual(this.image, initChromosome = chromosomeA), Individual(this.image, initChromosome = chromosomeB))
     }
-    fun joinSegments(parentB: Individual): Individual {
+    fun joinSegments() {
         /**
          * Possible future crossover method:
          */
-        return parentB
+        if (this.segments.size < 3) return
+        val segmentNr = Random.nextInt(this.segments.size-2)
+        val segmentA = this.segments.removeAt(segmentNr)
+        val segmentB = this.segments.removeAt(segmentNr+1)
+        val newSegment = segmentA.union(segmentB).toMutableList()
+
+
+        while (newSegment.isNotEmpty()) {
+            val i = newSegment.removeFirst()
+
+            val neightbours = getNeighbors(i) // get the neighbours of the node
+            for (neighbour in neightbours) {
+                if (neighbour in newSegment) { // selects the first neighbour that is in the segment
+                    this.chromosome[neighbour] = setDirection(i, neighbour)
+                    break
+                }
+            }
+        }
     }
 
     fun mutate(mutationRate: Double) {
@@ -309,11 +328,10 @@ class Individual(private val image: ImageObject,
          * Mutates the chromosome at random.
          * More implementation to come.
          */
-        when (Random.nextInt(0,1)) {
-            0 -> randomMutation(mutationRate)
-            // TODO("Add more mutation methods")
-            else -> randomMutation(mutationRate)
-        }
+        if (Random.nextDouble() < 0.0)
+            randomMutation(mutationRate)
+        else
+            joinSegments()
     }
     fun randomMutation(mutationRate: Double) {
         val possibleDirections = setOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
@@ -438,7 +456,7 @@ class Individual(private val image: ImageObject,
                 }
             }
         }
-        this.edgeValue = sum
+        this.edgeValue = -sum
     }
 
     fun printInfo() {

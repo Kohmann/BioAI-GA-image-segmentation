@@ -121,6 +121,22 @@ class Population(private var populationSize: Int,
         parents.clear()
         parents.addAll(newPopulation)
     }
+    fun selectionGA() {
+        val newPopulation = ArrayList<Individual>()
+
+        while (newPopulation.size < populationSize) {
+            val parent1 = individuals.random()
+            var parent2 = individuals.random()
+            while (parent1 == parent2)  parent2 = individuals.random()
+            if (parent1.weightedFitness < parent2.weightedFitness) // Minimizing fitness
+                newPopulation.add(parent1)
+            else
+                newPopulation.add(parent2)
+        }
+        individuals.clear()
+        parents.clear()
+        parents.addAll(newPopulation)
+    }
     fun createOffspring(mutationRate:Double, crossoverRate:Double) {
         /**
          * Creates the offspring of the parents.
@@ -129,7 +145,7 @@ class Population(private var populationSize: Int,
         val newPopulation = ArrayList<Individual>()
         while (newPopulation.size < populationSize) {
             val parent1 = parents.random()
-            var parent2 = parents[1]
+            var parent2 = parents.random()
             while (parent2 == parent1) parent2 = parents.random()
 
             val children = crossover(parent1, parent2, crossoverRate)
@@ -151,5 +167,11 @@ class Population(private var populationSize: Int,
         return arrayOf(p1, p2)
     }
 
+    fun bestIndividual(): Double {
+        /**
+         * Returns the best individual of the population wtp simple GA
+         */
+        return individuals.maxOf { it.weightedFitness }
+    }
 
 }

@@ -34,9 +34,24 @@ class GeneticAlgorithm(image: ImageObject) {
         population.calculateFitness()
         population.assignRank()
         println("Best connectivity individuals:")
-        population.individuals.forEach {
-            if (it.rank == 1)
-                it.printInfo()
+        population.fronts[0].forEach {
+            println("\t${it.segments.size}")
+        }
+    }
+
+    fun runGA() {
+
+        repeat(numGenerations) {
+            println("Generation: $generation")
+
+            population.combineWithOffspring() // combines parents with offspring
+            population.calculateFitness()
+            println("\tCurrent best: %.2f".format(population.bestIndividual().toFloat()))
+
+            population.selectionGA() // finds all parent candidates
+            population.createOffspring(mutationRate, crossoverRate)
+
+            generation++
         }
 
     }

@@ -19,10 +19,12 @@ fun main(args: Array<String>) {
     val GA = GeneticAlgorithm(image)
 
     measureTimeMillis {
-        GA.runNSGA()
+        //GA.runNSGA()
+        GA.runGA()
     }.let {
         println("Time taken: $it ms, ${it / 1000} s")
     }
+
 
 
 
