@@ -13,14 +13,16 @@ fun main(args: Array<String>) {
     val systemPath = System.getProperty("user.dir")
     val imgPath = "$systemPath/src/main/resources/training_images/118035/Test image.jpg"
 
-    val image = ImageObject(File(imgPath))
+    val savePath = "$systemPath/src/evaluator/Student_Segmentation_Files/"
+
+    val image = ImageObject(File(imgPath), savePath=savePath)
 
     // starts the program and also times the execution
     val GA = GeneticAlgorithm(image)
 
     measureTimeMillis {
-        //GA.runNSGA()
-        GA.runGA()
+        GA.runNSGA()
+        //GA.runGA()
     }.let {
         println("Time taken: $it ms, ${it / 1000} s")
     }

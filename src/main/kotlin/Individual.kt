@@ -31,8 +31,8 @@ class Individual(private val image: ImageObject,
     var crowdingDistance: Double = 0.0
 
     private val chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
-    val segments: ArrayList<MutableSet<Int>> = createSegments()
-    private val segments_mu: ArrayList<List<Int>>  = averageSegmentColor()
+    var segments: ArrayList<MutableSet<Int>> = ArrayList(mutableSetOf()) //createSegments()
+    private var segments_mu: ArrayList<List<Int>>  = ArrayList(listOf()) //averageSegmentColor()
 
 
     private fun construction(): Array<Direction> {
@@ -160,16 +160,23 @@ class Individual(private val image: ImageObject,
         while (unvisitedNodes.isNotEmpty()) {
             val node = unvisitedNodes.removeFirst()
 
-            val segment = getConnectedNodes(node)
+            var segment = getConnectedNodes(node)
             if (segment.isEmpty())
                 segments.add(mutableSetOf(node))
-            else
-                segments.add(segment)
+            //segment = mutableSetOf(node)
+
+            segments.add(segment)
 
             unvisitedNodes.removeAll(segment)
         }
-        return segments
+        //println("\nSegments: ${segments.size}")
+        //segments.forEach { println(it.toList()) }
+        for (i in 0 until geneSize) {
+            if (!segments.stream().anyMatch{ it.contains(i)})
+                println("$i not in a segment")
+        }
 
+        return segments
     }
     fun getConnectedNodes(startPos: Int, visited: MutableSet<Int> = mutableSetOf<Int>()): MutableSet<Int> {
         val connections = mutableSetOf<Int>()
@@ -367,6 +374,10 @@ class Individual(private val image: ImageObject,
         this.rank = rank
     }
     fun calculateFitnesses() {
+        // First, create the segments
+        this.segments = createSegments()
+        this.segments_mu = averageSegmentColor()
+
         // Calculate the fitness for each objective
         this.edgeFitness()
         this.connectivityFitness()
