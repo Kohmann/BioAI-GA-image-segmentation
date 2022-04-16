@@ -1,4 +1,10 @@
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+
 
 class Population(private var populationSize: Int,
                  image: ImageObject) {
@@ -9,12 +15,16 @@ class Population(private var populationSize: Int,
 
     var fronts = ArrayList<ArrayList<Individual>>()
 
+    private val executor = Executors.newFixedThreadPool(8 )
+
     init {
         repeat(populationSize) {
             parents.add(Individual(image))
         }
     }
-
+    fun stopThreads() {
+        executor.shutdown()
+    }
     fun combineWithOffspring() {
         individuals.clear()
         individuals.addAll(parents)
@@ -22,6 +32,17 @@ class Population(private var populationSize: Int,
     }
 
     fun calculateFitness() {
+
+        //val futures = ArrayList<Future<Unit>>()
+        //for (individual in individuals) {
+        //    futures.add(CompletableFuture.supplyAsync(
+        //            { individual.calculateFitnesses() }, executor))
+        //}
+        //while (!futures.all { it.isDone }) {
+        //    Thread.sleep(10)
+        //}
+        //futures.forEach { it.get() }
+
         individuals.forEach {
             it.calculateFitnesses()
         }
@@ -148,12 +169,14 @@ class Population(private var populationSize: Int,
         parents.clear()
         parents.addAll(newPopulation)
     }
-    fun createOffspring(mutationRate:Double, crossoverRate:Double) {
+    fun createOffspring2(mutationRate:Double, crossoverRate:Double) {
         /**
          * Creates the offspring of the parents.
          * TODO: make it proper
          */
+
         val newPopulation = ArrayList<Individual>()
+
         while (newPopulation.size < populationSize) {
             val parent1 = parents.random()
             var parent2 = parents.random()
@@ -162,11 +185,75 @@ class Population(private var populationSize: Int,
             val children = crossover(parent1, parent2, crossoverRate)
             children.forEach { it.mutate(mutationRate) }
             newPopulation.addAll(children)
-
         }
         offspring.clear()
         offspring.addAll(newPopulation)
     }
+
+    fun createOffspring(mutationRate:Double, crossoverRate:Double) {
+        /**
+         * Creates the offspring of the parents.
+         */
+
+        val newPopulation = Collections.synchronizedList(ArrayList<Any>())
+
+        //val newPopulation = ArrayList<Individual>()
+        val start = System.nanoTime()
+
+        val futures = ArrayList<Future<Array<Individual>>>()
+        repeat(populationSize / 2) {
+            futures.add(CompletableFuture.supplyAsync(
+                {
+                    val parent1 = parents.random()
+                    val parent2 = parents.random()
+                    val children = crossover(parent1, parent2, crossoverRate)
+                    children.forEach { it.mutate(mutationRate) }
+                    children
+                }, executor
+            ))
+            /*
+            executor.execute {
+                val parent1 = parents.random()
+                var parent2 = parents.random()
+                while (parent2 == parent1) parent2 = parents.random(
+                val children = crossover(parent1, parent2, crossoverRate)
+                children.forEach { it.mutate(mutationRate)
+                newPopulation.addAll(children)
+                print(".")
+
+                 */
+        }
+
+        while (!futures.all { it.isDone }) {
+            futures.forEach {
+                newPopulation.addAll(it.get())
+            }
+        }
+
+        //for (future in futures) {
+        //    newPopulation.addAll(future.get())
+        //}
+        //executor.shutdown()
+
+        //while (newPopulation.size < populationSize)
+        //    Thread.sleep(10)
+        //executor.shutdown()
+        //try {
+        //    if (!executor.awaitTermination(1, TimeUnit.MILLISECONDS)) {
+        //        executor.shutdownNow()
+        //    }
+        //} catch (e: InterruptedException) {
+        //    executor.shutdownNow()
+        //}
+
+        //executor.shutdown()
+        //println("\texecutor isTerminated:  ${executor.isTerminated}")
+        println("\n\tNumber of individuals: ${newPopulation.size}")
+        offspring.clear()
+        newPopulation.toMutableList().forEach { offspring.add(it as Individual) }
+
+    }
+
     fun crossover(p1: Individual,p2: Individual, crossoverRate:Double): Array<Individual> {
         /**
          * Creates the offspring of the parents.

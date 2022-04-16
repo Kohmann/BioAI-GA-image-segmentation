@@ -31,8 +31,8 @@ class Individual(private val image: ImageObject,
     var crowdingDistance: Double = 0.0
 
     private val chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
-    var segments: ArrayList<MutableSet<Int>> = ArrayList(mutableSetOf()) //createSegments()
-    private var segments_mu: ArrayList<List<Int>>  = ArrayList(listOf()) //averageSegmentColor()
+    var segments: ArrayList<MutableSet<Int>> = createSegments()
+    private var segments_mu: ArrayList<List<Int>> = averageSegmentColor()
 
 
     private fun construction(): Array<Direction> {
@@ -41,10 +41,11 @@ class Individual(private val image: ImageObject,
          */
         val possibleDirections = listOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
 
-        return if (params.useMST)
-            primMST()
-        else
-            Array(geneSize) { possibleDirections.random() } // random initialization
+        val gene = if (params.useMST)
+                    primMST()
+                else
+                    Array(geneSize) { possibleDirections.random() } // random initialization
+        return correctChromosome(gene)
     }
 
     private fun primMST(): Array<Direction> {
@@ -374,10 +375,6 @@ class Individual(private val image: ImageObject,
         this.rank = rank
     }
     fun calculateFitnesses() {
-        // First, create the segments
-        this.segments = createSegments()
-        this.segments_mu = averageSegmentColor()
-
         // Calculate the fitness for each objective
         this.edgeFitness()
         this.connectivityFitness()

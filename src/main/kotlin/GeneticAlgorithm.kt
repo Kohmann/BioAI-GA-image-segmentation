@@ -1,5 +1,4 @@
-
-
+import kotlin.system.measureTimeMillis
 
 
 class GeneticAlgorithm(private val image: ImageObject) {
@@ -22,23 +21,35 @@ class GeneticAlgorithm(private val image: ImageObject) {
             println("Generation: $generation")
 
             population.combineWithOffspring() // combines parents with offspring
-            // Non Dominated Sorting
-            population.calculateFitness()
-            population.assignRank()
 
+
+            // Non Dominated Sorting
+
+            population.calculateFitness()
+
+
+
+            population.assignRank()
             population.selection() // finds all parent candidates
+
+            val start = System.currentTimeMillis()
             population.createOffspring(mutationRate, crossoverRate)
+            val end = System.currentTimeMillis()
+            println("\tcreateOffspring: Time used in ${end - start}ms, ${(end - start) / 1000}s")
 
             generation++
         }
+
         population.combineWithOffspring()
         population.calculateFitness()
         population.assignRank()
-        println("Best connectivity individuals:")
-        population.fronts[0].forEach {
-            println("\t${it.segments.size}")
-            image.save(it, "green") // saving as image, black or green
-        }
+        population.stopThreads()
+        //println("Best connectivity individuals:")
+        //population.fronts[0].forEach {
+        //    println("\t${it.segments.size}")
+        //    image.save(it, "green") // saving as image, black or green
+        //}
+
     }
 
     fun runGA() {
