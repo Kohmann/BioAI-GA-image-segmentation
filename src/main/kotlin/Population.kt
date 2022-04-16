@@ -50,7 +50,7 @@ class Population(private var populationSize: Int,
         individuals.addAll(rankedIndividuals.flatten())
         this.fronts = rankedIndividuals // save globally for later
         for (i in 0 until fronts.size) {
-            println("Front $i: ${fronts[i].size}")
+            println("\tFront $i: ${fronts[i].size}")
         }
     }
     fun findDominatingSet(individualsSubset: MutableList<Individual>): ArrayList<Individual> {
