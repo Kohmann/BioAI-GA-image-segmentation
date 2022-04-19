@@ -18,7 +18,7 @@ class ImageObject(file: File,
 
     private fun load(file: File): Raster {
         val image = ImageIO.read(file).raster
-        //val image = ImageIO.read(file).raster.createChild(0, 0, 75*2, 50*2, 0, 0, null)
+        //val image = ImageIO.read(file).raster.createChild(0, 0, 15, 10, 0, 0, null)
 
         // x is in horisintal direction, y is in vertical direction
         val width = image.width
@@ -112,6 +112,18 @@ class ImageObject(file: File,
                 }
             }
         }
+
+        // border of the image
+        for (i in 0 until image.width) {
+            img.setRGB(i, 0, edgeColor.rgb)
+            img.setRGB(i, image.height - 1, edgeColor.rgb)
+        }
+        for (i in 0 until image.height) {
+            img.setRGB(0, i, edgeColor.rgb)
+            img.setRGB(image.width - 1, i, edgeColor.rgb)
+        }
+
+
         ImageIO.write(img, "jpg", imageFile)
 
     }

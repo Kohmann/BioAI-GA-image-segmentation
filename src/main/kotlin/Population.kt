@@ -15,9 +15,10 @@ class Population(private var populationSize: Int,
 
     var fronts = ArrayList<ArrayList<Individual>>()
 
-    private val executor = Executors.newFixedThreadPool(8 )
+    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
     init {
+        println("Using ${Runtime.getRuntime().availableProcessors()} threads")
         repeat(populationSize) {
             parents.add(Individual(image))
         }
@@ -197,9 +198,6 @@ class Population(private var populationSize: Int,
 
         val newPopulation = Collections.synchronizedList(ArrayList<Any>())
 
-        //val newPopulation = ArrayList<Individual>()
-        val start = System.nanoTime()
-
         val futures = ArrayList<Future<Array<Individual>>>()
         repeat(populationSize / 2) {
             futures.add(CompletableFuture.supplyAsync(
@@ -211,17 +209,6 @@ class Population(private var populationSize: Int,
                     children
                 }, executor
             ))
-            /*
-            executor.execute {
-                val parent1 = parents.random()
-                var parent2 = parents.random()
-                while (parent2 == parent1) parent2 = parents.random(
-                val children = crossover(parent1, parent2, crossoverRate)
-                children.forEach { it.mutate(mutationRate)
-                newPopulation.addAll(children)
-                print(".")
-
-                 */
         }
 
         while (!futures.all { it.isDone }) {
@@ -230,24 +217,6 @@ class Population(private var populationSize: Int,
             }
         }
 
-        //for (future in futures) {
-        //    newPopulation.addAll(future.get())
-        //}
-        //executor.shutdown()
-
-        //while (newPopulation.size < populationSize)
-        //    Thread.sleep(10)
-        //executor.shutdown()
-        //try {
-        //    if (!executor.awaitTermination(1, TimeUnit.MILLISECONDS)) {
-        //        executor.shutdownNow()
-        //    }
-        //} catch (e: InterruptedException) {
-        //    executor.shutdownNow()
-        //}
-
-        //executor.shutdown()
-        //println("\texecutor isTerminated:  ${executor.isTerminated}")
         println("\n\tNumber of individuals: ${newPopulation.size}")
         offspring.clear()
         newPopulation.toMutableList().forEach { offspring.add(it as Individual) }

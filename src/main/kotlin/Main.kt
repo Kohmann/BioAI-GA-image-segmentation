@@ -33,34 +33,6 @@ fun main(args: Array<String>) {
         println("Time taken: $it ms, ${it / 1000} s")
     }
 
-    /*
-    val individuals = ArrayList<Individual>()
-    repeat(40) {
-        individuals.add(Individual(image))
-    }
-
-    val executor = Executors.newFixedThreadPool(8 )
-    Thread.sleep(100)
-    println("Starting")
-    repeat(10){
-        Thread.sleep(1000)
-        measureTimeMillis {
-            val futures = ArrayList<Future<Unit>>()
-            for (individual in individuals) {
-                futures.add(
-                    CompletableFuture.supplyAsync(
-                        { individual.calculateFitnesses() }, executor))
-            }
-            futures.forEach { it.get() }
-            //individuals.forEach { it.calculateFitnesses() }
-
-        }.let {
-            println("Time taken: $it ms, ${it / 1000} s")
-        }
-    }
-    executor.shutdownNow()
-
-     */
 
 
 

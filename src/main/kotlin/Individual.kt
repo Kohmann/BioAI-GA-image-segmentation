@@ -170,8 +170,8 @@ class Individual(private val image: ImageObject,
 
             unvisitedNodes.removeAll(segment)
         }
-        //println("\nSegments: ${segments.size}")
-        //segments.forEach { println(it.toList()) }
+
+        // just a check to see if all nodes exist in a segment
         for (i in 0 until geneSize) {
             if (!segments.stream().anyMatch{ it.contains(i)})
                 println("$i not in a segment")
@@ -286,6 +286,7 @@ class Individual(private val image: ImageObject,
     fun isEdge(i: Int): Boolean {
         // Return true if the node has neighbours in another segment
         val commonSegment = segments.single { it.contains(i) }
+
         return if (i + 1 !in commonSegment && i + 1 < this.geneSize)
             true
         else i + this.imgWidth !in commonSegment && i + this.imgWidth < this.geneSize
@@ -347,6 +348,8 @@ class Individual(private val image: ImageObject,
             randomMutation(mutationRate)
         else
             joinSegments()
+        this.segments = createSegments() // update the segments
+        this.segments_mu = averageSegmentColor() // update the mean segments
     }
     fun randomMutation(mutationRate: Double) {
         val possibleDirections = setOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)

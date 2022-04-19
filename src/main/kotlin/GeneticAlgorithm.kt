@@ -22,13 +22,8 @@ class GeneticAlgorithm(private val image: ImageObject) {
 
             population.combineWithOffspring() // combines parents with offspring
 
-
             // Non Dominated Sorting
-
             population.calculateFitness()
-
-
-
             population.assignRank()
             population.selection() // finds all parent candidates
 
@@ -44,12 +39,12 @@ class GeneticAlgorithm(private val image: ImageObject) {
         population.calculateFitness()
         population.assignRank()
         population.stopThreads()
-        //println("Best connectivity individuals:")
-        //population.fronts[0].forEach {
-        //    println("\t${it.segments.size}")
-        //    image.save(it, "green") // saving as image, black or green
-        //}
-
+        println("Best connectivity individuals:")
+        population.fronts[0].forEach {
+            println("\t${it.segments.size}")
+            image.save(it, "black") // saving as image, black or green
+        }
+        //image.save(population.fronts[0][0], "green")
     }
 
     fun runGA() {

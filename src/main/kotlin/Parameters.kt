@@ -3,7 +3,7 @@ class Parameters {
     val populationSize: Int = 20
     val mutationRate: Double = 0.005
     val crossoverRate: Double = 0.7
-    val numGenerations: Int = 10
+    val numGenerations: Int = 5
 
     // Parameters for individuals
 
