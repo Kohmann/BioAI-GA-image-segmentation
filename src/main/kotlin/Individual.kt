@@ -1,4 +1,5 @@
 import java.util.*
+import javax.swing.text.Segment
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.random.Random
@@ -22,6 +23,7 @@ class Individual(private val image: ImageObject,
     private val geneSize = imgHeight * imgWidth
 
     // Objective functions
+    var evaluated = false
     var overallDeviation: Double = 0.0
     var connectivity: Double = 0.0
     var edgeValue: Double = 0.0
@@ -31,8 +33,8 @@ class Individual(private val image: ImageObject,
     var crowdingDistance: Double = 0.0
 
     private val chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
-    var segments: ArrayList<MutableSet<Int>> = createSegments()
-    private var segments_mu: ArrayList<List<Int>> = averageSegmentColor()
+    var segments: ArrayList<MutableSet<Int>> = arrayListOf() //createSegments()
+    private var segments_mu: ArrayList<List<Int>> = arrayListOf() //averageSegmentColor()
 
 
     private fun construction(): Array<Direction> {
@@ -60,25 +62,22 @@ class Individual(private val image: ImageObject,
         while (visited.size < geneSize){
             if (pos !in visited) {
                 visited.add(pos)
-                //println("\tAddingEdges: from $pos")
+
                 getNeighbors(pos).forEach { n ->
                     if (n !in visited) {
                         val edge = Edge(pos, n, image.distance(pos, n))
-                        //println("\t\t to $n ${edge.weight}")
                         heap.add(edge)
                     } }
             }
             val bestEdge = heap.poll() // Get the edge with the minimal distance
-            //print("\t\tBest edge ${bestEdge.from} -> ${bestEdge.to}, Distance: ${bestEdge.weight}")
             initChromosome[bestEdge.to] = setDirection(bestEdge.from, bestEdge.to) // Set the direction of the 'to' node
-            //println("  Direction: ${chromosome[bestEdge.to]}")
             pos = bestEdge.to
         }
-        // Display chromosome
-        //for (i in initChromosome.indices) {
-        //    if (i % imgWidth == 0) println()
-        //    print("%-5s  ".format(initChromosome[i]))
-        //   }
+
+        for (i in 0 until 40) {
+            val randNode = Random.nextInt(0 until geneSize)
+            initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
+        }
 
         return initChromosome
     }
@@ -94,7 +93,6 @@ class Individual(private val image: ImageObject,
         } else { // from == to
             Direction.NONE
         }
-
     }
     private fun getNeighbors(pos: Int): List<Int> {
         val neighbors = ArrayList<Int>()
@@ -161,10 +159,9 @@ class Individual(private val image: ImageObject,
         while (unvisitedNodes.isNotEmpty()) {
             val node = unvisitedNodes.removeFirst()
 
-            var segment = getConnectedNodes(node)
+            val segment = getConnectedNodes(node)
             if (segment.isEmpty())
                 segments.add(mutableSetOf(node))
-            //segment = mutableSetOf(node)
 
             segments.add(segment)
 
@@ -298,11 +295,33 @@ class Individual(private val image: ImageObject,
          * Returns a list of two new individuals.
          * More crossovers to come
          */
-
-        return uniformCrossover(parentB)
+        return onePointCrossover(parentB)
+        // return uniformCrossover(parentB)
 
     }
-    fun uniformCrossover(parentB: Individual): Array<Individual> {
+    private fun onePointCrossover(parentB: Individual): Array<Individual> {
+        /**
+         * Crossover two individuals.
+         * Returns a list of two new individuals.
+         * More crossovers to come
+         */
+        val childA = Array<Direction>(this.geneSize) { Direction.NONE }
+        val childB = Array<Direction>(this.geneSize) { Direction.NONE }
+
+        val crossoverPoint = Random.nextInt(0, this.geneSize)
+
+        for (i in 0 until crossoverPoint) {
+            childA[i] = this.chromosome[i]
+            childB[i] = parentB.chromosome[i]
+        }
+        for (i in crossoverPoint until this.geneSize) {
+            childA[i] = parentB.chromosome[i]
+            childB[i] = this.chromosome[i]
+        }
+
+        return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
+    }
+    private fun uniformCrossover(parentB: Individual): Array<Individual> {
         val chromosomeA = this.chromosome.clone()
         val chromosomeB = parentB.chromosome.clone()
 
@@ -315,9 +334,9 @@ class Individual(private val image: ImageObject,
 
         return arrayOf(Individual(this.image, initChromosome = chromosomeA), Individual(this.image, initChromosome = chromosomeB))
     }
-    fun joinSegments() {
+    private fun joinSegments() {
         /**
-         * Possible future crossover method:
+         * Combines two random neighbouring segments into one.
          */
         if (this.segments.size < 3) return
         val segmentNr = Random.nextInt(this.segments.size-2)
@@ -325,13 +344,19 @@ class Individual(private val image: ImageObject,
         val segmentB = this.segments.removeAt(segmentNr+1)
         val newSegment = segmentA.union(segmentB).toMutableList()
 
-
-        while (newSegment.isNotEmpty()) {
-            val i = newSegment.removeFirst()
+        // Ensures that the edges of the given segment are connected in the chromosome
+        segmentToGraph(newSegment)
+    }
+    private fun segmentToGraph(segment: MutableList<Int>) {
+        /**
+         * Converts a segment to a connected graph in the chromosome.
+         */
+        while (segment.isNotEmpty()) {
+            val i = segment.removeFirst()
 
             val neightbours = getNeighbors(i) // get the neighbours of the node
             for (neighbour in neightbours) {
-                if (neighbour in newSegment) { // selects the first neighbour that is in the segment
+                if (neighbour in segment) { // selects the first neighbour that is in the segment
                     this.chromosome[neighbour] = setDirection(i, neighbour)
                     break
                 }
@@ -339,17 +364,70 @@ class Individual(private val image: ImageObject,
         }
     }
 
+    private fun mergeSmallSegments() {
+        /**
+         * Merges small segments into one.
+         */
+        val smallSegments:List<MutableSet<Int>> = this.segments.filter { it.size <= params.minimalSegmentSize }.toCollection(mutableListOf())
+
+        //println("merging ${smallSegments.size} segments of a total of ${this.segments.size}")
+        val visitedOrMerged = HashSet<MutableSet<Int>>()
+
+        for (segment in smallSegments) {
+            val edgeNeighbours = getAllEdgeNeighbours(segment)
+
+            for (neighbour in edgeNeighbours) {
+                var neighbourSegment: MutableSet<Int>? = null  // = smallSegments.single { neighbour in it }
+                for (smallseg in smallSegments)
+                    if (neighbour in smallseg) {
+                        neighbourSegment = smallseg
+                        break
+                    }
+                if (neighbourSegment == null) continue
+                if (neighbourSegment !in visitedOrMerged) {
+                    visitedOrMerged.add(neighbourSegment)
+
+                    val newSegment = segment.union(neighbourSegment).toMutableList()
+                    // Ensures that the edges of the given segment are connected in the chromosome
+                    segmentToGraph(newSegment)
+                    break
+                }
+            }
+        }
+    }
+    private fun getAllEdgeNeighbours(a: MutableSet<Int>): Set<Int> {
+        /**
+         * Returns true if the two segments are neighbouring.
+         * Checks if a node has a neighbour that is in the other segment.
+         */
+        val edgeNeighbours = mutableSetOf<Int>()
+        for (node in a) {
+            val candidates = getNeighbors(node).filter { it !in a }
+            if (candidates.isNotEmpty()) {
+                edgeNeighbours.addAll(candidates)
+            }
+        }
+        return edgeNeighbours
+    }
+
     fun mutate(mutationRate: Double) {
         /**
          * Mutates the chromosome at random.
          * More implementation to come.
          */
-        if (Random.nextDouble() < 0.0)
+        if (Random.nextDouble() < 0.2)
             randomMutation(mutationRate)
         else
             joinSegments()
+    }
+    fun update() {
+        this.mergeSmallSegments()
         this.segments = createSegments() // update the segments
         this.segments_mu = averageSegmentColor() // update the mean segments
+    }
+
+    fun setCrowdingDist(crowdingDistance: Double) {
+        this.crowdingDistance = crowdingDistance
     }
     fun randomMutation(mutationRate: Double) {
         val possibleDirections = setOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
@@ -385,6 +463,8 @@ class Individual(private val image: ImageObject,
         // if weights for the objectives are determined
         if (this.params.simpleGA)
             this.weightedFitness = this.combinedFitness()
+
+        this.evaluated = true
     }
     fun combinedFitness(): Double {
         return this.edgeValue * this.params.edgeWeight +

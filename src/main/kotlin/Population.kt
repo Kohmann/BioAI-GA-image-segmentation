@@ -2,7 +2,6 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 
@@ -13,7 +12,7 @@ class Population(private var populationSize: Int,
     val offspring = ArrayList<Individual>()
     val individuals = ArrayList<Individual>()
 
-    var fronts = ArrayList<ArrayList<Individual>>()
+    var fronts = ArrayList<Set<Individual>>()
 
     private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
@@ -32,21 +31,21 @@ class Population(private var populationSize: Int,
         individuals.addAll(offspring)
     }
 
-    fun calculateFitness() {
+    fun evaluate() {
+        val futures = ArrayList<Future<Unit>>()
+        for (individual in individuals) {
+            futures.add(CompletableFuture.supplyAsync(
+                    {
+                    individual.update()
+                    if (!individual.evaluated)
+                        individual.calculateFitnesses()
+                    }, executor))
 
-        //val futures = ArrayList<Future<Unit>>()
-        //for (individual in individuals) {
-        //    futures.add(CompletableFuture.supplyAsync(
-        //            { individual.calculateFitnesses() }, executor))
-        //}
-        //while (!futures.all { it.isDone }) {
-        //    Thread.sleep(10)
-        //}
-        //futures.forEach { it.get() }
+            }
+        while (!futures.all { it.isDone })
+            Thread.sleep(50)
+        futures.forEach { it.get() }
 
-        individuals.forEach {
-            it.calculateFitnesses()
-        }
     }
 
     fun assignRank() {
@@ -56,7 +55,7 @@ class Population(private var populationSize: Int,
          */
         var rank = 1 // which panotofront we are working on
         val unassignedIndividuals = individuals.toMutableList() // copy of individuals
-        val rankedIndividuals = ArrayList<ArrayList<Individual>>() // list of panotofronts
+        val rankedIndividuals = ArrayList<Set<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
             val dominatingSet = findDominatingSet(unassignedIndividuals)
 
@@ -75,16 +74,16 @@ class Population(private var populationSize: Int,
             println("\tFront $i: ${fronts[i].size}")
         }
     }
-    fun findDominatingSet(individualsSubset: MutableList<Individual>): ArrayList<Individual> {
+    fun findDominatingSet(individualsSubset: MutableList<Individual>): MutableSet<Individual> {
         /**
          * Sorts the individuals in the population according to non-domination.
          * https://cs.uwlax.edu/~dmathias/cs419/readings/NSGAIIElitistMultiobjectiveGA.pdf
          */
-        val nonDominatingSet = ArrayList<Individual>()
+        val nonDominatingSet = mutableSetOf<Individual>()
         val dominatedSet = HashSet<Individual>() // for speed
 
         for (individual in individualsSubset) {
-            if (dominatedSet.contains(individual)) // already dominated
+            if (individual in dominatedSet) // already dominated
                 continue
             nonDominatingSet.add(individual) // temporarily add as a non-dominated individual
             for (otherIndividual in nonDominatingSet) {
@@ -101,36 +100,41 @@ class Population(private var populationSize: Int,
                 }
             }
         }
-        nonDominatingSet.removeAll(dominatedSet)
+        nonDominatingSet.subtract(dominatedSet)
         return nonDominatingSet
     }
 
-    fun determineCrowdingDistance(front: ArrayList<Individual>): ArrayList<Individual> {
+    fun determineCrowdingDistance(front: MutableList<Individual>): MutableList<Individual> {
         /**
          * Calculates the crowding distance for each individual in the front.
          */
+
+        // sets all the crowding distances to 0, otherwise they may be left with a value from a previous front
+        front.forEach { it.setCrowdingDist(0.0) }
+
+        val numberOfObjectives = front[0].fitnesses().size
         // for each objective
-        for (objective in 0 until front[0].fitnesses().size) {
+        for (objective in 0 until numberOfObjectives) {
+
             front.sortBy { it.fitnesses()[objective] } // sort by objective, ascending
-            //println("\t\tObjective $objective:")
-            //front.forEach { println("\t\t\t${it.fitnesses()[objective]}") }
+
             // edges of the panotofront is set to infinite
 
-            front[0].crowdingDistance = Double.MAX_VALUE
-            front[front.lastIndex].crowdingDistance = Double.MAX_VALUE
+            front.first().crowdingDistance = Double.MAX_VALUE
+            front.last().crowdingDistance = Double.MAX_VALUE
 
             val fmin = front.first().fitnesses()[objective] // lowest fitness value
             val fmax = front.last().fitnesses()[objective] // highest fitness value
 
             for (i in 1 until front.lastIndex) {
-                front[i].crowdingDistance +=
-                    (front[i + 1].fitnesses()[objective] - front[i - 1].fitnesses()[objective]) / (fmax - fmin)
+                front[i].crowdingDistance += front[i + 1].fitnesses()[objective] - front[i - 1].fitnesses()[objective]
+                front[i].crowdingDistance /= (fmax - fmin)
             }
         }
         return front
     }
 
-    fun selection() {
+    fun selection2() {
         val newPopulation = ArrayList<Individual>()
         var frontNr = 0
 
@@ -141,8 +145,8 @@ class Population(private var populationSize: Int,
                 newPopulation.addAll(fronts[frontNr])
             }
             else { // otherwise, add the individuals with the highest crowding distance
-                val frontWithDistance = determineCrowdingDistance(fronts[frontNr])
-                frontWithDistance.sortBy { it.crowdingDistance }
+                val frontWithDistance = determineCrowdingDistance(fronts[frontNr].toMutableList())
+                frontWithDistance.sortBy { -it.crowdingDistance }
 
                 val startIndex = frontWithDistance.lastIndex - (populationSize - newPopulation.size)
                 newPopulation.addAll(frontWithDistance.subList(startIndex, frontWithDistance.lastIndex))
@@ -154,6 +158,23 @@ class Population(private var populationSize: Int,
         parents.clear()
         parents.addAll(newPopulation)
     }
+
+    fun selection() {
+        val newPopulation = ArrayList<Individual>()
+        var frontNr = 0
+
+        while (newPopulation.size < populationSize) {
+            val frontCrowdingDistance = determineCrowdingDistance(fronts[frontNr].toMutableList())
+            newPopulation.addAll(frontCrowdingDistance)
+            frontNr++
+        }
+        newPopulation.sortBy { -it.crowdingDistance }
+
+        individuals.clear()
+        parents.clear()
+        parents.addAll(newPopulation.subList(0, populationSize))
+    }
+
     fun selectionGA() {
         val newPopulation = ArrayList<Individual>()
 
@@ -185,6 +206,7 @@ class Population(private var populationSize: Int,
 
             val children = crossover(parent1, parent2, crossoverRate)
             children.forEach { it.mutate(mutationRate) }
+
             newPopulation.addAll(children)
         }
         offspring.clear()
@@ -193,10 +215,11 @@ class Population(private var populationSize: Int,
 
     fun createOffspring(mutationRate:Double, crossoverRate:Double) {
         /**
-         * Creates the offspring of the parents.
+         * Creates the offspring from the parents using binary tournament selection.
+         * Applies crossover and mutation.
          */
 
-        val newPopulation = Collections.synchronizedList(ArrayList<Any>())
+        val newPopulation = Collections.synchronizedList(ArrayList<Individual>())
 
         val futures = ArrayList<Future<Array<Individual>>>()
         repeat(populationSize / 2) {
@@ -204,6 +227,8 @@ class Population(private var populationSize: Int,
                 {
                     val parent1 = parents.random()
                     val parent2 = parents.random()
+                    val winner = parent1.crowdingTournamentSelection(parent2)
+
                     val children = crossover(parent1, parent2, crossoverRate)
                     children.forEach { it.mutate(mutationRate) }
                     children
@@ -212,12 +237,12 @@ class Population(private var populationSize: Int,
         }
 
         while (!futures.all { it.isDone }) {
-            futures.forEach {
-                newPopulation.addAll(it.get())
-            }
+            Thread.sleep(50)
+        }
+        futures.forEach {
+            newPopulation.addAll(it.get())
         }
 
-        println("\n\tNumber of individuals: ${newPopulation.size}")
         offspring.clear()
         newPopulation.toMutableList().forEach { offspring.add(it as Individual) }
 

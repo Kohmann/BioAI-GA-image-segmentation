@@ -7,10 +7,8 @@ import javax.imageio.ImageIO
 import kotlin.system.measureTimeMillis
 
 
-
-
 /**
- * Main class that initiates the ants
+ * Main class that runs the program
  */
 
 
@@ -25,10 +23,13 @@ fun main(args: Array<String>) {
 
     // starts the program and also times the execution
     val GA = GeneticAlgorithm(image)
-
+    val params = Parameters()
     measureTimeMillis {
-        GA.runNSGA()
-        //GA.runGA()
+        if (params.simpleGA)
+            GA.runGA()
+        else
+            GA.runNSGA()
+
     }.let {
         println("Time taken: $it ms, ${it / 1000} s")
     }
