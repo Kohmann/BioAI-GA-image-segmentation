@@ -78,7 +78,7 @@ class ImageObject(file: File,
         return image.getPixel(x, y, IntArray(image.numBands)).toList()
     }
 
-    fun save(solution: Individual, mode: String) {
+    fun save(solution: Individual, mode: String, extra_info: String = "") {
         /**
          * Saves the image to a file
          * solution: ArrayList of MutableSets containing the indices of the pixels that should be painted
@@ -88,7 +88,9 @@ class ImageObject(file: File,
          */
         val folder = if (mode == "black") "type1" else "type2"
 
-        val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" + solution.segments.size.toString() + ".jpg"
+        val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" +
+                           solution.segments.size.toString() +
+                            extra_info + ".jpg"
 
 
         val imageFile = File(fullFilePath) // correct to

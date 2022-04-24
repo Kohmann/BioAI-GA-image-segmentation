@@ -478,7 +478,6 @@ class Individual(private val image: ImageObject,
     fun overallDeviationFitness() {
         /**
          * Measure of similarity in each segment
-         * TODO: Investigate if calculating the distance for each color independently is more correct
          */
         var sum = 0.0
         for (segmentIdx in this.segments.indices) {
@@ -529,6 +528,8 @@ class Individual(private val image: ImageObject,
                 // Bottom right
                 if ( (i+this.imgWidth+1) >= 0 && (i+this.imgWidth+1) !in segment)
                     sum += kernel[8]
+
+                //sum /= kernel[4]
             }
         }
 

@@ -59,8 +59,8 @@ class GeneticAlgorithm(private val image: ImageObject) {
         println("Best connectivity individuals:")
         population.fronts[0].forEach {
             println("\t${it.segments.size}")
-            image.save(it, "black") // saving as image, black or green
-            image.save(it, "green") // saving as image, black or green
+            image.save(it, mode="black") // saving as image, black or green
+            image.save(it, mode="green") // saving as image, black or green
         }
         println("Connectivity")
         population.fronts[0].forEach {
@@ -78,15 +78,19 @@ class GeneticAlgorithm(private val image: ImageObject) {
     }
 
     fun runGA() {
-        var prevBestFitness = 10000000.0
+        var prevBestFitness = 0.0
         repeat(numGenerations) {
             println("Generation: $generation")
 
             population.combineWithOffspring() // combines parents with offspring
             population.evaluate()
             val generationBest = population.bestIndividual().weightedFitness
-            println("\tCurrent best: %-10.2f  Fitness improvement: %-6.2f".format(generationBest, (prevBestFitness - generationBest) ))
-            population.individuals.map { it.weightedFitness }.forEach { println("\t\t$it") }
+            print("\tCurrent best: %-10.2f  Fitness improvement: %-10.2f".format(generationBest, (prevBestFitness - generationBest) ))
+            println(", Segments: ${population.bestIndividual().segments.size}")
+
+            if (generation % 5 == 0)
+                image.save(population.bestIndividual(), mode="green", extra_info = "_generation=%d".format(generation)) // saving as image, black or green
+
             prevBestFitness = generationBest
             population.selectionGA() // finds all parent candidates
             population.createOffspring(mutationRate, crossoverRate)
@@ -99,7 +103,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
         val best = population.bestIndividual()
         println("Best individual:")
         best.printInfo()
-        image.save(best, "green") // saving as image, black or green
+        image.save(best, mode="green", extra_info = "_final") // saving as image, black or green
 
     }
 

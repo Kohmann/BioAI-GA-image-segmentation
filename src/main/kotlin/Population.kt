@@ -227,7 +227,6 @@ class Population(private var populationSize: Int,
                 {
                     val parent1 = parents.random()
                     val parent2 = parents.random()
-                    val winner = parent1.crowdingTournamentSelection(parent2)
 
                     val children = crossover(parent1, parent2, crossoverRate)
                     children.forEach { it.mutate(mutationRate) }
