@@ -289,6 +289,7 @@ class Individual(private val image: ImageObject,
         else i + this.imgWidth !in commonSegment && i + this.imgWidth < this.geneSize
     }
 
+
     fun crossover(parentB: Individual): Array<Individual> {
         /**
          * Crossover two individuals.
@@ -297,7 +298,6 @@ class Individual(private val image: ImageObject,
          */
         return onePointCrossover(parentB)
         // return uniformCrossover(parentB)
-
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
         /**
@@ -409,7 +409,6 @@ class Individual(private val image: ImageObject,
         }
         return edgeNeighbours
     }
-
     fun mutate(mutationRate: Double) {
         /**
          * Mutates the chromosome at random.
@@ -420,6 +419,7 @@ class Individual(private val image: ImageObject,
         else
             joinSegments()
     }
+
     fun update() {
         this.mergeSmallSegments()
         this.segments = createSegments() // update the segments

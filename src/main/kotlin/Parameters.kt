@@ -5,13 +5,13 @@ class Parameters {
     val crossoverRate: Double = 0.7
     val numGenerations: Int = 50
 
-    val minimalSegmentSize = 100 // Experimental parameter
+    val minimalSegmentSize = 10 * 10 // Experimental parameter
 
     // Parameters for individuals
 
     val useMST = true
 
-    val simpleGA: Boolean = true
+    val simpleGA: Boolean = false
     val edgeWeight = 1.0
     val connectivityWeight = 10.0
     val deviationWeight = 1.0
