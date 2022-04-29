@@ -4,6 +4,7 @@ import java.awt.image.Kernel
 import java.awt.image.Raster
 import java.io.File
 import javax.imageio.ImageIO
+import kotlin.math.sqrt
 
 
 /**
@@ -17,8 +18,8 @@ class ImageObject(file: File,
     // TODO: Maybe add some image processing options, like blurring,
 
     private fun load(file: File): Raster {
-        val image = ImageIO.read(file).raster
-        //val image = ImageIO.read(file).raster.createChild(0, 0, 100, 100, 0, 0, null)
+        //val image = ImageIO.read(file).raster
+        val image = ImageIO.read(file).raster.createChild(0, 0, 7, 7, 0, 0, null)
 
         // x is in horisintal direction, y is in vertical direction
         val width = image.width
@@ -49,12 +50,13 @@ class ImageObject(file: File,
          * The Euclidean distance between two pixels in RGB space
          */
         var sum = 0.0
-        for (i in 0 until 3) {
+        val channels = this.getChannels()
+        for (i in 0 until channels) {
             val diff = rgb1[i] - rgb2[i]
             val square = diff * diff
             sum += square
         }
-        return Math.sqrt(sum)
+        return sqrt(sum)
     }
     fun getHeight(): Int {
         return image.height

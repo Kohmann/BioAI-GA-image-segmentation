@@ -18,50 +18,44 @@ class GeneticAlgorithm(private val image: ImageObject) {
     fun runNSGA() {
 
         repeat(numGenerations) {
-            println("Generation: $generation")
+            println("\nGeneration: $generation")
+            val start = System.currentTimeMillis()
 
             population.combineWithOffspring() // combines parents with offspring
-
             // Non Dominated Sorting
-            val start = System.currentTimeMillis()
             population.evaluate()
-            val end = System.currentTimeMillis()
-            println("\tEvaluation: Time used in ${end - start}ms, ${(end - start) / 1000}s")
+
+
+            val segmentCount = population.individuals.map { it.segments.flatten().sum() }
+            println("\tThe segments includes all pixels just once: ${segmentCount.all { it == segmentCount[0]}}")
+            val segmentSizes = population.individuals.map { it.segments.size }
+            println("\tSegment number: ${segmentSizes.sum()}, average segment size: ${segmentSizes.average()}")
 
             population.assignRank()
             population.selection() // finds all parent candidates
-
-            if (generation % 10 == 0) {
-                println("Connectivity")
-                population.fronts[0].forEach {
-                    print("\t, ${it.connectivity}")
-                }
-                println("\nEdge")
-                population.fronts[0].forEach {
-                    print("\t, ${it.edgeValue}")
-                }
-                println("\nOverall")
-                population.fronts[0].forEach {
-                    print("\t, ${it.overallDeviation}")
-                }
-                println()
-            }
-
             population.createOffspring(mutationRate, crossoverRate)
+
+            val end = System.currentTimeMillis()
+            println("\tTime used in ${end - start}ms, ${(end - start) / 1000}s")
 
             generation++
         }
 
+        println("\nDone\n")
         population.combineWithOffspring()
         population.evaluate()
         population.assignRank()
         population.stopThreads()
-        println("Best connectivity individuals:")
-        population.fronts[0].forEach {
-            println("\t${it.segments.size}")
-            image.save(it, mode="black") // saving as image, black or green
-            image.save(it, mode="green") // saving as image, black or green
-        }
+
+        val additional_info = "_15x15merging"
+        println("Best individuals:")
+        //population.fronts[0].forEach {
+        //    println("\t${it.segments.size}")
+        //    image.save(it, mode="black", extra_info=additional_info) // saving as image, black or green
+        //    image.save(it, mode="green", extra_info=additional_info) // saving as image, black or green
+        //}
+
+        // Extra info
         println("Connectivity")
         population.fronts[0].forEach {
             print("\t, ${it.connectivity}")
