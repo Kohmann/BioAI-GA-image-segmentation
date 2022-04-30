@@ -19,35 +19,35 @@ class GeneticAlgorithm(private val image: ImageObject) {
 
         repeat(numGenerations) {
             println("Generation: $generation")
+            val start = System.currentTimeMillis()
 
             population.combineWithOffspring() // combines parents with offspring
 
             // Non Dominated Sorting
-            val start = System.currentTimeMillis()
+
             population.evaluate()
-            val end = System.currentTimeMillis()
-            println("\tEvaluation: Time used in ${end - start}ms, ${(end - start) / 1000}s")
+
+            println("\tUnique individuals ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
+
+            val segmentCount = population.individuals.map { it.segments.flatten().sum() }
+            val count = image.getHeight() * image.getWidth() -1
+            //val sum = count * (count + 1) / 2
+            //var bugSegment: Individual
+            //if (segmentCount.any { it != sum })
+            //    population.individuals[segmentCount.indexOfFirst { it != sum }].printInfo()
+
+            println("\tThe segments includes all pixels just once: ${segmentCount.all { it == segmentCount[0]}}")
+            println("\tThe segments sums: ${segmentCount.joinToString(", ")}")
+            val segmentSizes = population.individuals.map { it.segments.size }
+            println("\tSegment number: ${segmentSizes.sum()}, average segment size: ${segmentSizes.average()}")
 
             population.assignRank()
             population.selection() // finds all parent candidates
 
-            if (generation % 10 == 0) {
-                println("Connectivity")
-                population.fronts[0].forEach {
-                    print("\t, ${it.connectivity}")
-                }
-                println("\nEdge")
-                population.fronts[0].forEach {
-                    print("\t, ${it.edgeValue}")
-                }
-                println("\nOverall")
-                population.fronts[0].forEach {
-                    print("\t, ${it.overallDeviation}")
-                }
-                println()
-            }
-
             population.createOffspring(mutationRate, crossoverRate)
+
+            val end = System.currentTimeMillis()
+            println("\tEvaluation: Time used in ${end - start}ms, ${(end - start) / 1000}s")
 
             generation++
         }
@@ -57,11 +57,11 @@ class GeneticAlgorithm(private val image: ImageObject) {
         population.assignRank()
         population.stopThreads()
         println("Best connectivity individuals:")
-        population.fronts[0].forEach {
-            println("\t${it.segments.size}")
-            image.save(it, mode="black") // saving as image, black or green
-            image.save(it, mode="green") // saving as image, black or green
-        }
+        //population.fronts[0].forEach {
+        //    println("\t${it.segments.size}")
+        //    image.save(it, mode="black") // saving as image, black or green
+        //    image.save(it, mode="green") // saving as image, black or green
+        //}
         println("Connectivity")
         population.fronts[0].forEach {
             print("\t, ${it.connectivity}")

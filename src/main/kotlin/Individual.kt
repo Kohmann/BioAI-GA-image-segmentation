@@ -1,5 +1,4 @@
 import java.util.*
-import javax.swing.text.Segment
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.random.Random
@@ -23,6 +22,7 @@ class Individual(private val image: ImageObject,
     private val geneSize = imgHeight * imgWidth
 
     // Objective functions
+    var createdSegments = false
     var evaluated = false
     var overallDeviation: Double = 0.0
     var connectivity: Double = 0.0
@@ -32,7 +32,7 @@ class Individual(private val image: ImageObject,
     var rank: Int = 0
     var crowdingDistance: Double = 0.0
 
-    private val chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
+    private var chromosome: Array<Direction> = if (initChromosome.isEmpty()) construction() else initChromosome
     var segments: ArrayList<MutableSet<Int>> = arrayListOf() //createSegments()
     private var segments_mu: ArrayList<List<Int>> = arrayListOf() //averageSegmentColor()
 
@@ -74,7 +74,7 @@ class Individual(private val image: ImageObject,
             pos = bestEdge.to
         }
 
-        for (i in 0 until 40) {
+        for (i in 0 until 20) {
             val randNode = Random.nextInt(0 until geneSize)
             initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
         }
@@ -151,7 +151,7 @@ class Individual(private val image: ImageObject,
          * Does not pay attention to the direction of the edges.
          */
         // First, correct the chromosome
-        this.correctChromosome(this.chromosome)
+        this.chromosome = this.correctChromosome(this.chromosome)
 
         val segments = ArrayList<MutableSet<Int>>()
         val unvisitedNodes = MutableList(geneSize) { it }
@@ -169,10 +169,13 @@ class Individual(private val image: ImageObject,
         }
 
         // just a check to see if all nodes exist in a segment
+
         for (i in 0 until geneSize) {
-            if (!segments.stream().anyMatch{ it.contains(i)})
-                println("$i not in a segment")
+            if (!segments.any { it.contains(i) }) {
+                println("Node $i is not in any segment")
+            }
         }
+        //println("Segmentsum: ${segments.flatten().sum()}")
 
         return segments
     }
@@ -289,6 +292,7 @@ class Individual(private val image: ImageObject,
         else i + this.imgWidth !in commonSegment && i + this.imgWidth < this.geneSize
     }
 
+
     fun crossover(parentB: Individual): Array<Individual> {
         /**
          * Crossover two individuals.
@@ -296,8 +300,6 @@ class Individual(private val image: ImageObject,
          * More crossovers to come
          */
         return onePointCrossover(parentB)
-        // return uniformCrossover(parentB)
-
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
         /**
@@ -339,9 +341,11 @@ class Individual(private val image: ImageObject,
          * Combines two random neighbouring segments into one.
          */
         if (this.segments.size < 3) return
-        val segmentNr = Random.nextInt(this.segments.size-2)
-        val segmentA = this.segments.removeAt(segmentNr)
-        val segmentB = this.segments.removeAt(segmentNr+1)
+        //println("number of segments before: ${this.segments.size}")
+        val segmentNr = Random.nextInt(this.segments.size-1)
+        //println("segmentNr: $segmentNr")
+        val segmentA = this.segments.removeAt(segmentNr) //all elements after segmentNr are shifted to the left
+        val segmentB = this.segments.removeAt(segmentNr)
         val newSegment = segmentA.union(segmentB).toMutableList()
 
         // Ensures that the edges of the given segment are connected in the chromosome
@@ -415,15 +419,23 @@ class Individual(private val image: ImageObject,
          * Mutates the chromosome at random.
          * More implementation to come.
          */
-        if (Random.nextDouble() < 0.2)
-            randomMutation(mutationRate)
-        else
-            joinSegments()
+        if (mutationRate > 0.0) {
+            if (Random.nextDouble() < 0.0)
+                randomMutation(mutationRate)
+            else {
+                joinSegments()
+            }
+            createdSegments = false
+            evaluated = false
+        }
+
     }
     fun update() {
-        this.mergeSmallSegments()
         this.segments = createSegments() // update the segments
+        this.mergeSmallSegments()
         this.segments_mu = averageSegmentColor() // update the mean segments
+        this.createdSegments = true
+        this.evaluated = false
     }
 
     fun setCrowdingDist(crowdingDistance: Double) {
@@ -567,4 +579,10 @@ class Individual(private val image: ImageObject,
         println("\t\tConnectivity: %.4f".format(connectivity.toFloat()))
         println("\t\tOverall Deviation: %.4f".format(overallDeviation.toFloat()))
     }
+
+    override fun hashCode(): Int {
+        return this.chromosome.toString().hashCode()
+    }
+    fun copy() = Individual(image, chromosome)
+
 }

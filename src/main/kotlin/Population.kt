@@ -14,12 +14,15 @@ class Population(private var populationSize: Int,
 
     var fronts = ArrayList<Set<Individual>>()
 
-    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+    private val executor = Executors.newFixedThreadPool(8) // Runtime.getRuntime().availableProcessors()
 
     init {
         println("Using ${Runtime.getRuntime().availableProcessors()} threads")
         repeat(populationSize) {
             parents.add(Individual(image))
+        }
+        parents.forEach {
+            it.update()
         }
     }
     fun stopThreads() {
@@ -34,18 +37,15 @@ class Population(private var populationSize: Int,
     fun evaluate() {
         val futures = ArrayList<Future<Unit>>()
         for (individual in individuals) {
-            futures.add(CompletableFuture.supplyAsync(
-                    {
-                    individual.update()
-                    if (!individual.evaluated)
-                        individual.calculateFitnesses()
+            futures.add(CompletableFuture.supplyAsync({
+                    if (!individual.createdSegments) individual.update()
+                    if (!individual.evaluated) individual.calculateFitnesses()
                     }, executor))
-
             }
+
         while (!futures.all { it.isDone })
             Thread.sleep(50)
         futures.forEach { it.get() }
-
     }
 
     fun assignRank() {
@@ -54,13 +54,14 @@ class Population(private var populationSize: Int,
          * https://link.springer.com/content/pdf/10.1007/3-540-45356-3.pdf   On pdf page: 857
          */
         var rank = 1 // which panotofront we are working on
-        val unassignedIndividuals = individuals.toMutableList() // copy of individuals
+        val unassignedIndividuals = individuals.toMutableSet() // copy of individuals
         val rankedIndividuals = ArrayList<Set<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
             val dominatingSet = findDominatingSet(unassignedIndividuals)
 
             dominatingSet.forEach { it.assignRank(rank) }
             unassignedIndividuals.removeAll(dominatingSet)
+
             rankedIndividuals.add(dominatingSet) // adds each panotofront to rankedIndividuals
 
             rank++
@@ -74,7 +75,7 @@ class Population(private var populationSize: Int,
             println("\tFront $i: ${fronts[i].size}")
         }
     }
-    fun findDominatingSet(individualsSubset: MutableList<Individual>): MutableSet<Individual> {
+    fun findDominatingSet(individualsSubset: MutableSet<Individual>): MutableSet<Individual> {
         /**
          * Sorts the individuals in the population according to non-domination.
          * https://cs.uwlax.edu/~dmathias/cs419/readings/NSGAIIElitistMultiobjectiveGA.pdf
@@ -100,8 +101,8 @@ class Population(private var populationSize: Int,
                 }
             }
         }
-        nonDominatingSet.subtract(dominatedSet)
-        return nonDominatingSet
+
+        return nonDominatingSet.subtract(dominatedSet).toMutableSet()
     }
 
     fun determineCrowdingDistance(front: MutableList<Individual>): MutableList<Individual> {
@@ -219,14 +220,14 @@ class Population(private var populationSize: Int,
          * Applies crossover and mutation.
          */
 
-        val newPopulation = Collections.synchronizedList(ArrayList<Individual>())
+        val newPopulation = ArrayList<Individual>()//Collections.synchronizedList(ArrayList<Individual>())
 
         val futures = ArrayList<Future<Array<Individual>>>()
         repeat(populationSize / 2) {
             futures.add(CompletableFuture.supplyAsync(
                 {
-                    val parent1 = parents.random()
-                    val parent2 = parents.random()
+                    val parent1 = parents.random().copy()
+                    val parent2 = parents.random().copy()
 
                     val children = crossover(parent1, parent2, crossoverRate)
                     children.forEach { it.mutate(mutationRate) }
