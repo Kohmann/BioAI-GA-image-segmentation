@@ -34,7 +34,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
             println("\tThe segments includes all pixels just once: ${segmentCount.all { it == segmentCount[0]}}")
 
             val segmentSizes = population.individuals.map { it.segments.size }
-            println("\tSegment number: ${segmentSizes.sum()}, average segment size: ${segmentSizes.average()}")
+            println("\tAverage segment size: ${segmentSizes.average()}")
 
             population.assignRank()
             population.selection() // finds all parent candidates
@@ -42,7 +42,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
             population.createOffspring(mutationRate, crossoverRate)
 
             val end = System.currentTimeMillis()
-            println("\tEvaluation: Time used in ${end - start}ms, ${(end - start) / 1000}s")
+            println("\t Time used in ${end - start}ms, ${(end - start) / 1000}s")
 
             generation++
         }
@@ -78,13 +78,14 @@ class GeneticAlgorithm(private val image: ImageObject) {
     fun runGA() {
         var prevBestFitness = 0.0
         repeat(numGenerations) {
-            println("Generation: $generation")
+            print("Generation: $generation")
+            val start = System.currentTimeMillis()
 
             population.combineWithOffspring() // combines parents with offspring
             population.evaluate()
             val generationBest = population.bestIndividual().weightedFitness
-            print("\tCurrent best: %-10.2f  Fitness improvement: %-10.2f".format(generationBest, (prevBestFitness - generationBest) ))
-            println(", Segments: ${population.bestIndividual().segments.size}")
+            print("\t Best: %-10.2f  Fitness improvement: %-10.2f".format(generationBest, (prevBestFitness - generationBest) ))
+            print(", Segments: ${population.bestIndividual().segments.size}")
 
             if (generation % 5 == 0)
                 image.save(population.bestIndividual(), mode="green", extra_info = "_generation=%d".format(generation)) // saving as image, black or green
@@ -93,6 +94,8 @@ class GeneticAlgorithm(private val image: ImageObject) {
             population.selectionGA() // finds all parent candidates
             population.createOffspring(mutationRate, crossoverRate)
 
+            val end = System.currentTimeMillis()
+            println(", Time used in ${end - start}ms, ${(end - start) / 1000}s")
             generation++
         }
         population.combineWithOffspring()

@@ -74,10 +74,10 @@ class Individual(private val image: ImageObject,
             pos = bestEdge.to
         }
 
-        for (i in 0 until 20) {
-            val randNode = Random.nextInt(0 until geneSize)
-            initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
-        }
+        //for (i in 0 until 20) {
+        //    val randNode = Random.nextInt(0 until geneSize)
+        //    initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
+        //}
 
         return initChromosome
     }
@@ -310,7 +310,7 @@ class Individual(private val image: ImageObject,
         val childA = Array<Direction>(this.geneSize) { Direction.NONE }
         val childB = Array<Direction>(this.geneSize) { Direction.NONE }
 
-        val crossoverPoint = Random.nextInt(0, this.geneSize)
+        val crossoverPoint = Random.nextInt(1, this.geneSize)
 
         for (i in 0 until crossoverPoint) {
             childA[i] = this.chromosome[i]
@@ -395,7 +395,7 @@ class Individual(private val image: ImageObject,
 
         val newSegment = segment.union(mostEqualSegment.first).toMutableList()
 
-        this.segments.add(newSegment.toMutableSet())
+        //this.segments.add(newSegment.toMutableSet())
         // Ensures that the edges of the given segment are connected in the chromosome
         segmentToGraph(newSegment)
 
@@ -479,12 +479,12 @@ class Individual(private val image: ImageObject,
          */
         if (mutationRate > 0.0) {
             if (Random.nextDouble() < mutationRate)
-                joinSegmentSearch()
-            else {
-                joinSegmentSearch()
-                //mergeSmallSegments()
-            }
-            mergeSmallSegments()
+                randomMutation()
+            //else {
+            //    joinSegmentSearch()
+            //    //mergeSmallSegments()
+            //}
+            //mergeSmallSegments()
             createdSegments = false
             evaluated = false
         }
@@ -499,12 +499,14 @@ class Individual(private val image: ImageObject,
     fun setCrowdingDist(crowdingDistance: Double) {
         this.crowdingDistance = crowdingDistance
     }
-    fun randomMutation(mutationRate: Double) {
+    fun randomMutation() {
         val possibleDirections = setOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
-        for (i in chromosome.indices) {
-            if (Random.nextDouble() < mutationRate) // chance of mutation to a new direction
-                chromosome[i] =  possibleDirections.subtract(setOf(chromosome[i])).random() // Only new directions
-        }
+        //for (i in chromosome.indices) {
+        //    if (Random.nextDouble() < mutationRate) // chance of mutation to a new direction
+        //        chromosome[i] =  possibleDirections.subtract(setOf(chromosome[i])).random() // Only new directions
+        //}
+        val randomIndex = Random.nextInt(chromosome.size)
+        chromosome[randomIndex] =  possibleDirections.subtract(setOf(chromosome[randomIndex])).random() // Only new directions
     }
 
     fun crowdingTournamentSelection(other: Individual): Individual {
