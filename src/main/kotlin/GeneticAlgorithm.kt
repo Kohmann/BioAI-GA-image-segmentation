@@ -30,14 +30,9 @@ class GeneticAlgorithm(private val image: ImageObject) {
             println("\tUnique individuals ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
 
             val segmentCount = population.individuals.map { it.segments.flatten().sum() }
-            val count = image.getHeight() * image.getWidth() -1
-            //val sum = count * (count + 1) / 2
-            //var bugSegment: Individual
-            //if (segmentCount.any { it != sum })
-            //    population.individuals[segmentCount.indexOfFirst { it != sum }].printInfo()
-
+            //println("segmentCount ${segmentCount.joinToString(", ")}")
             println("\tThe segments includes all pixels just once: ${segmentCount.all { it == segmentCount[0]}}")
-            println("\tThe segments sums: ${segmentCount.joinToString(", ")}")
+
             val segmentSizes = population.individuals.map { it.segments.size }
             println("\tSegment number: ${segmentSizes.sum()}, average segment size: ${segmentSizes.average()}")
 

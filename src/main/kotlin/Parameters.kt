@@ -1,9 +1,9 @@
 class Parameters {
     // Genetic algorithm parameters
-    val populationSize: Int = 12
-    val mutationRate: Double = 0.1
+    val populationSize: Int = 20
+    val mutationRate: Double = 0.2
     val crossoverRate: Double = 0.5
-    val numGenerations: Int = 50
+    val numGenerations: Int = 30
 
     val minimalSegmentSize = 100 // Experimental parameter
 

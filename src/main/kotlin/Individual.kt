@@ -355,6 +355,7 @@ class Individual(private val image: ImageObject,
         /**
          * Converts a segment to a connected graph in the chromosome.
          */
+        this.segments.add(segment.toMutableSet())
         while (segment.isNotEmpty()) {
             val i = segment.removeFirst()
 
@@ -419,11 +420,12 @@ class Individual(private val image: ImageObject,
          * Mutates the chromosome at random.
          * More implementation to come.
          */
+
         if (mutationRate > 0.0) {
-            if (Random.nextDouble() < 0.0)
-                randomMutation(mutationRate)
-            else {
+            if (Random.nextDouble() < mutationRate)
                 joinSegments()
+            else {
+                mergeSmallSegments()
             }
             createdSegments = false
             evaluated = false
@@ -432,7 +434,6 @@ class Individual(private val image: ImageObject,
     }
     fun update() {
         this.segments = createSegments() // update the segments
-        this.mergeSmallSegments()
         this.segments_mu = averageSegmentColor() // update the mean segments
         this.createdSegments = true
         this.evaluated = false
@@ -580,9 +581,7 @@ class Individual(private val image: ImageObject,
         println("\t\tOverall Deviation: %.4f".format(overallDeviation.toFloat()))
     }
 
-    override fun hashCode(): Int {
-        return this.chromosome.toString().hashCode()
-    }
+    //override fun hashCode() = this.chromosome.toString().hashCode()
     fun copy() = Individual(image, chromosome)
 
 }

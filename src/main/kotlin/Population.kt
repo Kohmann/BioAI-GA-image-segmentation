@@ -14,7 +14,7 @@ class Population(private var populationSize: Int,
 
     var fronts = ArrayList<Set<Individual>>()
 
-    private val executor = Executors.newFixedThreadPool(8) // Runtime.getRuntime().availableProcessors()
+    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
     init {
         println("Using ${Runtime.getRuntime().availableProcessors()} threads")
@@ -55,6 +55,7 @@ class Population(private var populationSize: Int,
          */
         var rank = 1 // which panotofront we are working on
         val unassignedIndividuals = individuals.toMutableSet() // copy of individuals
+        println("Unassigned individuals: ${unassignedIndividuals.size}")
         val rankedIndividuals = ArrayList<Set<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
             val dominatingSet = findDominatingSet(unassignedIndividuals)
@@ -70,6 +71,7 @@ class Population(private var populationSize: Int,
         // Updates the population with the ranked individuals
         individuals.clear()
         individuals.addAll(rankedIndividuals.flatten())
+        println("Ranked individuals: ${individuals.size}")
         this.fronts = rankedIndividuals // save globally for later
         for (i in 0 until fronts.size) {
             println("\tFront $i: ${fronts[i].size}")
@@ -230,6 +232,7 @@ class Population(private var populationSize: Int,
                     val parent2 = parents.random().copy()
 
                     val children = crossover(parent1, parent2, crossoverRate)
+                    children.forEach { if (!it.createdSegments) it.update() }
                     children.forEach { it.mutate(mutationRate) }
                     children
                 }, executor
@@ -245,6 +248,7 @@ class Population(private var populationSize: Int,
 
         offspring.clear()
         newPopulation.toMutableList().forEach { offspring.add(it as Individual) }
+        //newPopulation.forEach { it.mutate(mutationRate) }
 
     }
 
