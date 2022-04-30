@@ -351,6 +351,54 @@ class Individual(private val image: ImageObject,
         // Ensures that the edges of the given segment are connected in the chromosome
         segmentToGraph(newSegment)
     }
+    private fun joinSegmentSearch() {
+        /**
+         * Combines two neighbouring segments which are similar into one.
+         */
+        // There exists a segment that can be joined
+        if (this.segments.size < 5) return
+
+
+        val segmentIndex = Random.nextInt(this.segments.size-1)
+        val segment = this.segments.removeAt(segmentIndex)
+        val segmentColor = this.segments_mu.removeAt(segmentIndex)
+
+
+        //println("\nAll segments: ${this.segments}")
+        //println("Current segment: $segment")
+
+        val edgeNeighbours = getAllEdgeNeighbours(segment)
+        var mostEqualSegment = Pair<MutableSet<Int>, Double>(mutableSetOf(), Double.MAX_VALUE)
+
+        val nodesInCheckedSegments = mutableSetOf<Int>()
+
+        // for every nodes that is in a possible neighbour segment
+        for (neighbour in edgeNeighbours) {
+
+            // filter out thise nodes that are already in a segment or are already in a checked segment
+            if (neighbour !in segment && neighbour !in nodesInCheckedSegments) {
+                // a candidate neighbour segment
+                // println("Neighbour: $neighbour")
+                val candidateSegment = this.segments.firstOrNull { it.contains(neighbour) } ?: throw Error("Candidate segment is null")
+                //println("  in Candidate segment: $candidateSegment")
+                val candidateSegmentColor = this.segments_mu.removeAt(this.segments.indexOf(candidateSegment))
+                this.segments.remove(candidateSegment)
+
+                // does not need to check all the other nodes in this segment
+                nodesInCheckedSegments.addAll(candidateSegment)
+
+                // Distance between the two segments, closer the better
+                val colorSimilarity = image.distance(segmentColor, candidateSegmentColor)
+                if (colorSimilarity < mostEqualSegment.second)
+                    mostEqualSegment = Pair(candidateSegment, colorSimilarity)
+            }
+        }
+
+        val newSegment = segment.union(mostEqualSegment.first).toMutableList()
+        // Ensures that the edges of the given segment are connected in the chromosome
+        segmentToGraph(newSegment)
+
+    }
     private fun segmentToGraph(segment: MutableList<Int>) {
         /**
          * Converts a segment to a connected graph in the chromosome.
@@ -374,6 +422,7 @@ class Individual(private val image: ImageObject,
          * Merges small segments into one.
          */
         val smallSegments:List<MutableSet<Int>> = this.segments.filter { it.size <= params.minimalSegmentSize }.toCollection(mutableListOf())
+        this.segments.removeAll(smallSegments)
 
         //println("merging ${smallSegments.size} segments of a total of ${this.segments.size}")
         val visitedOrMerged = HashSet<MutableSet<Int>>()
@@ -399,6 +448,7 @@ class Individual(private val image: ImageObject,
                 }
             }
         }
+        println("segments after smallsmerg: ${this.segments}")
     }
     private fun getAllEdgeNeighbours(a: MutableSet<Int>): Set<Int> {
         /**
@@ -420,12 +470,12 @@ class Individual(private val image: ImageObject,
          * Mutates the chromosome at random.
          * More implementation to come.
          */
-
         if (mutationRate > 0.0) {
             if (Random.nextDouble() < mutationRate)
-                joinSegments()
+                joinSegmentSearch()
             else {
-                mergeSmallSegments()
+                joinSegmentSearch()
+                //mergeSmallSegments()
             }
             createdSegments = false
             evaluated = false
