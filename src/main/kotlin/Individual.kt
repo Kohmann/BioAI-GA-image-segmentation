@@ -354,6 +354,7 @@ class Individual(private val image: ImageObject,
     private fun joinSegmentSearch() {
         /**
          * Combines two neighbouring segments which are similar into one.
+         * Should be doublechecked if it works properly.
          */
         // There exists a segment that can be joined
         if (this.segments.size < 5) return
@@ -362,10 +363,6 @@ class Individual(private val image: ImageObject,
         val segmentIndex = Random.nextInt(this.segments.size-1)
         val segment = this.segments.removeAt(segmentIndex)
         val segmentColor = this.segments_mu.removeAt(segmentIndex)
-
-
-        //println("\nAll segments: ${this.segments}")
-        //println("Current segment: $segment")
 
         val edgeNeighbours = getAllEdgeNeighbours(segment)
         var mostEqualSegment = Pair<MutableSet<Int>, Double>(mutableSetOf(), Double.MAX_VALUE)
@@ -379,10 +376,12 @@ class Individual(private val image: ImageObject,
             if (neighbour !in segment && neighbour !in nodesInCheckedSegments) {
                 // a candidate neighbour segment
                 // println("Neighbour: $neighbour")
-                val candidateSegment = this.segments.firstOrNull { it.contains(neighbour) } ?: throw Error("Candidate segment is null")
-                //println("  in Candidate segment: $candidateSegment")
-                val candidateSegmentColor = this.segments_mu.removeAt(this.segments.indexOf(candidateSegment))
-                this.segments.remove(candidateSegment)
+                // val candidateSegment = this.segments.firstOrNull { it.contains(neighbour) } ?: throw Error("Candidate segment is null")
+                val candidateSegmentIndex = this.segments.indexOfFirst { it.contains(neighbour) }
+                if (candidateSegmentIndex == -1) throw Error("Candidate segment is null")
+                val candidateSegment = this.segments.removeAt(candidateSegmentIndex)
+                val candidateSegmentColor = this.segments_mu.removeAt(candidateSegmentIndex)
+
 
                 // does not need to check all the other nodes in this segment
                 nodesInCheckedSegments.addAll(candidateSegment)
@@ -395,6 +394,8 @@ class Individual(private val image: ImageObject,
         }
 
         val newSegment = segment.union(mostEqualSegment.first).toMutableList()
+
+        this.segments.add(newSegment.toMutableSet())
         // Ensures that the edges of the given segment are connected in the chromosome
         segmentToGraph(newSegment)
 
@@ -403,7 +404,8 @@ class Individual(private val image: ImageObject,
         /**
          * Converts a segment to a connected graph in the chromosome.
          */
-        this.segments.add(segment.toMutableSet())
+
+        //this.segments.add(segment.toMutableSet())
         while (segment.isNotEmpty()) {
             val i = segment.removeFirst()
 
@@ -420,24 +422,31 @@ class Individual(private val image: ImageObject,
     private fun mergeSmallSegments() {
         /**
          * Merges small segments into one.
+         * MAY NOT WORK PROPERLY.
          */
-        val smallSegments:List<MutableSet<Int>> = this.segments.filter { it.size <= params.minimalSegmentSize }.toCollection(mutableListOf())
+        val smallSegments:List<MutableSet<Int>> = this.segments.filter { it.size <= params.minimalSegmentSize }
         this.segments.removeAll(smallSegments)
 
-        //println("merging ${smallSegments.size} segments of a total of ${this.segments.size}")
+
         val visitedOrMerged = HashSet<MutableSet<Int>>()
 
+        // for every small segment
         for (segment in smallSegments) {
             val edgeNeighbours = getAllEdgeNeighbours(segment)
 
+            // for every neighbour node
             for (neighbour in edgeNeighbours) {
-                var neighbourSegment: MutableSet<Int>? = null  // = smallSegments.single { neighbour in it }
+
+                // find the segment that contains the neighbour
+                var neighbourSegment: MutableSet<Int>? = null
                 for (smallseg in smallSegments)
                     if (neighbour in smallseg) {
                         neighbourSegment = smallseg
                         break
                     }
-                if (neighbourSegment == null) continue
+                if (neighbourSegment == null) continue // should not happen but just in case
+
+
                 if (neighbourSegment !in visitedOrMerged) {
                     visitedOrMerged.add(neighbourSegment)
 
@@ -448,12 +457,10 @@ class Individual(private val image: ImageObject,
                 }
             }
         }
-        println("segments after smallsmerg: ${this.segments}")
     }
     private fun getAllEdgeNeighbours(a: MutableSet<Int>): Set<Int> {
         /**
-         * Returns true if the two segments are neighbouring.
-         * Checks if a node has a neighbour that is in the other segment.
+         * Returns a list of all neighbouring nodes that are not in current segment.
          */
         val edgeNeighbours = mutableSetOf<Int>()
         for (node in a) {
@@ -477,10 +484,10 @@ class Individual(private val image: ImageObject,
                 joinSegmentSearch()
                 //mergeSmallSegments()
             }
+            mergeSmallSegments()
             createdSegments = false
             evaluated = false
         }
-
     }
     fun update() {
         this.segments = createSegments() // update the segments
@@ -631,7 +638,7 @@ class Individual(private val image: ImageObject,
         println("\t\tOverall Deviation: %.4f".format(overallDeviation.toFloat()))
     }
 
-    //override fun hashCode() = this.chromosome.toString().hashCode()
+    override fun hashCode() = this.chromosome.toString().hashCode()
     fun copy() = Individual(image, chromosome)
 
 }

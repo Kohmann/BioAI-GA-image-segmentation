@@ -27,7 +27,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
 
             population.evaluate()
 
-            println("\tUnique individuals ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
+            println("\tUnique individuals: ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
 
             val segmentCount = population.individuals.map { it.segments.flatten().sum() }
             //println("segmentCount ${segmentCount.joinToString(", ")}")
@@ -51,12 +51,15 @@ class GeneticAlgorithm(private val image: ImageObject) {
         population.evaluate()
         population.assignRank()
         population.stopThreads()
-        println("Best connectivity individuals:")
-        //population.fronts[0].forEach {
-        //    println("\t${it.segments.size}")
-        //    image.save(it, mode="black") // saving as image, black or green
-        //    image.save(it, mode="green") // saving as image, black or green
-        //}
+        println("Best individuals:")
+        if (params.save_results) {
+            population.fronts[0].forEach {
+                println("\t${it.segments.size}")
+                image.save(it, mode="black") // saving as image, black or green
+                image.save(it, mode="green") // saving as image, black or green
+            }
+        }
+
         println("Connectivity")
         population.fronts[0].forEach {
             print("\t, ${it.connectivity}")
@@ -98,7 +101,11 @@ class GeneticAlgorithm(private val image: ImageObject) {
         val best = population.bestIndividual()
         println("Best individual:")
         best.printInfo()
-        image.save(best, mode="green", extra_info = "_final") // saving as image, black or green
+        if (params.save_results) {
+            val extra_information = "_final"
+            image.save(best, mode="black", extra_info=extra_information) // saving as image, black or green
+            image.save(best, mode="green", extra_info=extra_information) // saving as image, black or green
+        }
 
     }
 

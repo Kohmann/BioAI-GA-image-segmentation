@@ -55,7 +55,7 @@ class Population(private var populationSize: Int,
          */
         var rank = 1 // which panotofront we are working on
         val unassignedIndividuals = individuals.toMutableSet() // copy of individuals
-        println("Unassigned individuals: ${unassignedIndividuals.size}")
+
         val rankedIndividuals = ArrayList<Set<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
             val dominatingSet = findDominatingSet(unassignedIndividuals)
@@ -64,14 +64,13 @@ class Population(private var populationSize: Int,
             unassignedIndividuals.removeAll(dominatingSet)
 
             rankedIndividuals.add(dominatingSet) // adds each panotofront to rankedIndividuals
-
             rank++
         }
 
         // Updates the population with the ranked individuals
         individuals.clear()
         individuals.addAll(rankedIndividuals.flatten())
-        println("Ranked individuals: ${individuals.size}")
+
         this.fronts = rankedIndividuals // save globally for later
         for (i in 0 until fronts.size) {
             println("\tFront $i: ${fronts[i].size}")
