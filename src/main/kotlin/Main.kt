@@ -15,7 +15,7 @@ import kotlin.system.measureTimeMillis
 fun main(args: Array<String>) {
 
     val systemPath = System.getProperty("user.dir")
-    val imgPath = "$systemPath/src/main/resources/training_images/118035/Test image.jpg"
+    val imgPath = "$systemPath/src/main/resources/training_images/86016/Test image.jpg"
 
     val savePath = "$systemPath/src/evaluator/Student_Segmentation_Files/"
 
