@@ -1,7 +1,7 @@
 class Parameters {
 
     val imageFolder = "training_images"
-    val workingImageFolder = "118035"
+    val workingImageFolder = "86016"
 
     // Genetic algorithm parameters
     val populationSize: Int = 10

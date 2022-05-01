@@ -1,8 +1,6 @@
 import java.util.*
-import javax.swing.text.Segment
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashSet
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -259,27 +257,30 @@ class Individual(private val image: ImageObject,
 
         return connections //.toMutableList()
     }
-    fun averageSegmentColor(): ArrayList<List<Int>> {
+
+    fun overallAverageSegmentColor(): ArrayList<List<Int>>{
+        val segmentColors = ArrayList<List<Int>>()
+        for (segment in this.segments) {
+            segmentColors.add(averageSegmentColor(segment))
+        }
+        return segmentColors
+    }
+    fun averageSegmentColor(segment: MutableSet<Int>): List<Int> {
         /**
          * Calculates the average color of each segment.
          * Returns a hashmap with the segment number as key and the color as value.
          */
-        val segmentColors = ArrayList<List<Int>>()
-        for (segment in this.segments) {
-
-            var red = 0
-            var green = 0
-            var blue = 0
-            for (pixel in segment) {
-                val rgb = image.getPixel(pixel)
-                red += rgb[0]
-                green += rgb[1]
-                blue += rgb[2]
-            }
-            segmentColors.add(listOf(red / segment.size, green / segment.size, blue / segment.size))
-            //segmentColors.add(Color(red / segment.size, green / segment.size, blue / segment.size))
+        var red = 0
+        var green = 0
+        var blue = 0
+        for (pixel in segment) {
+            val rgb = image.getPixel(pixel)
+            red += rgb[0]
+            green += rgb[1]
+            blue += rgb[2]
         }
-        return segmentColors
+        return listOf(red / segment.size, green / segment.size, blue / segment.size)
+
     }
 
     private fun getNextNode(i: Int): Int {
@@ -323,6 +324,7 @@ class Individual(private val image: ImageObject,
         else
             return mergeSectorCrossover(parentB)
 
+
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
         /**
@@ -355,7 +357,7 @@ class Individual(private val image: ImageObject,
         val parentACopy = this
         val parentBCopy = parentB
 
-        for (i in 0 until 10){
+        for (i in 0 until 5){
             val crossoverPoint = Random.nextInt(1, this.geneSize)
             var segment1 = mutableSetOf<Int>()
             var segment2 = mutableSetOf<Int>()
@@ -395,6 +397,36 @@ class Individual(private val image: ImageObject,
         return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
     }
 
+    private fun splitSegment() {
+        /**
+         * Split segment into two segments according to best color difference
+         */
+        val segment = this.segments.random().toMutableList()
+        if (segment.size < 5) return
+
+        var bestSplit = Pair(1, 0.0)
+
+        repeat(10) {
+            val splitPoint = Random.nextInt(1, segment.size - 1)
+            val segment1 = segment.subList(0, splitPoint)
+            val segment2 = segment.subList(splitPoint, segment.size)
+
+            val segment1_color = averageSegmentColor(segment1.toMutableSet())
+            val segment2_color = averageSegmentColor(segment2.toMutableSet())
+
+            val colorDifference = image.distance(segment1_color, segment2_color)
+            if (colorDifference > bestSplit.second) {
+                bestSplit = Pair(splitPoint, colorDifference)
+            }
+        }
+        val segment1 = segment.subList(0, bestSplit.first)
+        val segment2 = segment.subList(bestSplit.first, segment.size)
+
+
+        segmentToGraph(segment1.toMutableList())
+        segmentToGraph(segment2.toMutableList())
+
+    }
 
     private fun uniformCrossover(parentB: Individual): Array<Individual> {
         val chromosomeA = this.chromosome.clone()
@@ -553,8 +585,11 @@ class Individual(private val image: ImageObject,
             if (Random.nextDouble() < mutationRate) {
                 when (Random.nextInt(0,1)) {
                     0 -> randomMutation(mutationRate)
-                    //else -> joinSegmentSearch()
-                    else -> joinSegments()
+                    //1 -> joinSegmentSearch()
+                    //2 -> splitSegment()
+                    //3 -> crazyMutation(mutationRate)
+                    //4 -> reversePointMutation(mutationRate)
+                    //else -> joinSegments()
                 }
             }
 
@@ -565,7 +600,7 @@ class Individual(private val image: ImageObject,
 
     fun update() {
         this.segments = createSegments() // update the segments
-        this.segments_mu = averageSegmentColor() // update the mean segments
+        this.segments_mu = overallAverageSegmentColor() // update the mean segments
         this.createdSegments = true
         this.evaluated = false
     }
@@ -598,7 +633,7 @@ class Individual(private val image: ImageObject,
     /** reverses some number of directions inside a chromosome */
     fun reversePointMutation(mutationRate:Double) {
         /** manually assign the highest possible number of reverses */
-        val NUMREVERSES = 100
+        val NUMREVERSES = 10
         val times = (0..NUMREVERSES).random().toInt()
         for(i in  0 until times){
             val index = (0..geneSize).random().toInt()
@@ -611,7 +646,7 @@ class Individual(private val image: ImageObject,
          * We randomly find  indices from which we take those
          * We transpose those values
          */
-        if (mutationRate < 0.0001){
+        if (Random.nextDouble() < 0.1){
             val row = (0..imgHeight).random()
             val column = (0..imgWidth).random()
             val min = minOf(imgWidth - column, imgHeight - row)
