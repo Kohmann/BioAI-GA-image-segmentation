@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
             GA.runNSGA()
 
     }.let {
-        println("Time taken: $it ms, ${it / 1000} s")
+        println("\nTime taken: $it ms, ${it / 1000} s")
     }
 
 

@@ -21,7 +21,7 @@ class ImageObject(file: File,
         //val image = ImageIO.read(file).raster
         val image = ImageIO.read(file).raster.createChild(0, 0, 100, 100, 0, 0, null)
 
-        // x is in horisintal direction, y is in vertical direction
+        // x is in horizontal direction, y is in vertical direction
         val width = image.width
         val height = image.height
         val channels = image.numBands
@@ -90,8 +90,12 @@ class ImageObject(file: File,
          */
         val folder = if (mode == "black") "type1" else "type2"
 
+        val fitness = "_%.0f_%.0f_%.0f_".format(solution.edgeValue, solution.connectivity, solution.overallDeviation)
+
+
         val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" +
                            solution.segments.size.toString() +
+                           fitness +
                             extra_info + ".jpg"
 
 
