@@ -556,10 +556,12 @@ class Individual(private val image: ImageObject,
     fun randomMutation(mutationRate: Double) {
         // FIXXXUXUXU
         val possibleDirections = setOf<Direction>(Direction.DOWN, Direction.LEFT, Direction.RIGHT, Direction.UP)
-        for (i in chromosome.indices) {
-            if (Random.nextDouble() < mutationRate) // chance of mutation to a new direction
-                chromosome[i] =  possibleDirections.subtract(setOf(chromosome[i])).random() // Only new directions
-        }
+        //for (i in chromosome.indices) {
+        //    if (Random.nextDouble() < mutationRate) // chance of mutation to a new direction
+        //        chromosome[i] =  possibleDirections.subtract(setOf(chromosome[i])).random() // Only new directions
+        //}
+        val randomIndex = Random.nextInt(chromosome.size)
+        chromosome[randomIndex] =  possibleDirections.subtract(setOf(chromosome[randomIndex])).random() // Only new directions
     }
 
     fun returnReverse(dir:Direction): Direction{
