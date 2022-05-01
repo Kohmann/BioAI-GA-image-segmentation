@@ -22,6 +22,9 @@ class Population(private var populationSize: Int,
         repeat(populationSize) {
             parents.add(Individual(image))
         }
+        parents.forEach {
+            it.update()
+        }
     }
     fun stopThreads() {
         executor.shutdown()
@@ -35,18 +38,15 @@ class Population(private var populationSize: Int,
     fun evaluate() {
         val futures = ArrayList<Future<Unit>>()
         for (individual in individuals) {
-            futures.add(CompletableFuture.supplyAsync(
-                    {
-                    individual.update()
-                    if (!individual.evaluated)
-                        individual.calculateFitnesses()
+            futures.add(CompletableFuture.supplyAsync({
+                    if (!individual.createdSegments) individual.update()
+                    if (!individual.evaluated) individual.calculateFitnesses()
                     }, executor))
-
             }
+
         while (!futures.all { it.isDone })
             Thread.sleep(50)
         futures.forEach { it.get() }
-
     }
 
     fun assignRank() {
@@ -54,28 +54,30 @@ class Population(private var populationSize: Int,
          * Assigns rank to each individual with respect to dominance in the objective fitness space.
          * https://link.springer.com/content/pdf/10.1007/3-540-45356-3.pdf   On pdf page: 857
          */
-        var rank = 1 // which panoptofront we are working on
-        val unassignedIndividuals = individuals.toMutableList() // copy of individuals
+        var rank = 1 // which panotofront we are working on
+        val unassignedIndividuals = individuals.toMutableSet() // copy of individuals
+
         val rankedIndividuals = ArrayList<Set<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
             val dominatingSet = findDominatingSet(unassignedIndividuals)
 
             dominatingSet.forEach { it.assignRank(rank) }
             unassignedIndividuals.removeAll(dominatingSet)
-            rankedIndividuals.add(dominatingSet) // adds each panoptofront to rankedIndividuals
 
+            rankedIndividuals.add(dominatingSet) // adds each panotofront to rankedIndividuals
             rank++
         }
 
         // Updates the population with the ranked individuals
         individuals.clear()
         individuals.addAll(rankedIndividuals.flatten())
+
         this.fronts = rankedIndividuals // save globally for later
         for (i in 0 until fronts.size) {
             println("\tFront $i: ${fronts[i].size}")
         }
     }
-    fun findDominatingSet(individualsSubset: MutableList<Individual>): MutableSet<Individual> {
+    fun findDominatingSet(individualsSubset: MutableSet<Individual>): MutableSet<Individual> {
         /**
          * Sorts the individuals in the population according to non-domination.
          * https://cs.uwlax.edu/~dmathias/cs419/readings/NSGAIIElitistMultiobjectiveGA.pdf
@@ -101,6 +103,7 @@ class Population(private var populationSize: Int,
                 }
             }
         }
+
         return nonDominatingSet.subtract(dominatedSet).toMutableSet()
     }
 
@@ -219,16 +222,17 @@ class Population(private var populationSize: Int,
          * Applies crossover and mutation.
          */
 
-        val newPopulation = Collections.synchronizedList(ArrayList<Individual>())
+        val newPopulation = ArrayList<Individual>()//Collections.synchronizedList(ArrayList<Individual>())
 
         val futures = ArrayList<Future<Array<Individual>>>()
         repeat(populationSize / 2) {
             futures.add(CompletableFuture.supplyAsync(
                 {
-                    val parent1 = parents.random()
-                    val parent2 = parents.random()
+                    val parent1 = parents.random().copy()
+                    val parent2 = parents.random().copy()
 
                     val children = crossover(parent1, parent2, crossoverRate)
+                    children.forEach { if (!it.createdSegments) it.update() }
                     children.forEach { it.mutate(mutationRate) }
                     children
                 }, executor
@@ -244,6 +248,7 @@ class Population(private var populationSize: Int,
 
         offspring.clear()
         newPopulation.toMutableList().forEach { offspring.add(it as Individual) }
+        //newPopulation.forEach { it.mutate(mutationRate) }
 
     }
 
