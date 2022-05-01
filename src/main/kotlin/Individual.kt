@@ -301,7 +301,8 @@ class Individual(private val image: ImageObject,
          * Returns a list of two new individuals.
          * More crossovers to come
          */
-        return onePointCrossover(parentB)
+        //return onePointCrossover(parentB)
+        return mergeSectorCrossover(parentB)
 
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
@@ -531,8 +532,13 @@ class Individual(private val image: ImageObject,
          * More implementation to come.
          */
         if (mutationRate > 0.0) {
-            if (Random.nextDouble() < mutationRate)
-                randomMutation(mutationRate)
+            if (Random.nextDouble() < mutationRate) {
+                when (Random.nextInt(0,2)) {
+                    0 -> randomMutation(mutationRate)
+                    else -> joinSegments()
+                }
+            }
+
             //else {
             //    joinSegmentSearch()
             //    //mergeSmallSegments()

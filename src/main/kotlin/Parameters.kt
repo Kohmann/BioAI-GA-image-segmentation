@@ -9,7 +9,6 @@ class Parameters {
 
     val save_results = true
 
-
     // Parameters for individuals
 
     val useMST = true
