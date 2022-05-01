@@ -13,17 +13,22 @@ import kotlin.system.measureTimeMillis
 
 
 fun main(args: Array<String>) {
+    val params = Parameters() // parameters that control the program
 
     val systemPath = System.getProperty("user.dir")
-    val imgPath = "$systemPath/src/main/resources/training_images/86016/Test image.jpg"
+    val imageFolder = params.imageFolder // folder to read images from, training_image and test_images
+    val workingImageFolder = params.workingImageFolder // for example "86016"
 
-    val savePath = "$systemPath/src/evaluator/Student_Segmentation_Files/"
+    //val imgPath = "$systemPath/src/main/resources/$imageFolder/$workingImageFolder/Test image.jpg"
+    val imgPath = "$systemPath/src/evaluator/$imageFolder/$workingImageFolder/Test image.jpg"
+    val savePath = "$systemPath/src/evaluator/Student_Segmentation_Files/$workingImageFolder/"
+    println("Working on image: $imgPath")
 
     val image = ImageObject(File(imgPath), savePath=savePath)
 
     // starts the program and also times the execution
     val GA = GeneticAlgorithm(image)
-    val params = Parameters()
+
     measureTimeMillis {
         if (params.simpleGA)
             GA.runGA()

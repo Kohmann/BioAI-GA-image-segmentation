@@ -24,7 +24,6 @@ class GeneticAlgorithm(private val image: ImageObject) {
             population.combineWithOffspring() // combines parents with offspring
 
             // Non Dominated Sorting
-
             population.evaluate()
 
             println("\tUnique individuals: ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
@@ -34,7 +33,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
                 throw IllegalStateException("Bugged individual, segment count is not equal")
 
             val segmentSizes = population.individuals.map { it.segments.size }
-            println("\tAverage segment size: ${segmentSizes.average()}")
+            println("\tAverage segment number: ${segmentSizes.average()}")
 
             population.assignRank()
             population.selection() // finds all parent candidates
@@ -53,26 +52,13 @@ class GeneticAlgorithm(private val image: ImageObject) {
         population.stopThreads()
         println("Best individuals:")
         if (params.save_results) {
-            population.fronts[0].forEach {
-                println("\t${it.segments.size}")
-                image.save(it, mode="black") // saving as image, black or green
-                image.save(it, mode="green") // saving as image, black or green
-            }
+            val optimalIndividuals = population.fronts[0].filter {
+                it.segments.size <= params.maxNumberOfSegments && it.segments.size >= params.minNumberOfSegments }
+
+            image.saveAll(optimalIndividuals.toSet(), mode="black")
+            image.saveAll(optimalIndividuals.toSet(), mode="green")
         }
 
-
-        println("Connectivity")
-        population.fronts[0].forEach {
-            print("\t, ${it.connectivity}")
-        }
-        println("\nEdge")
-        population.fronts[0].forEach {
-            print("\t, ${it.edgeValue}")
-        }
-        println("\nOverall")
-        population.fronts[0].forEach {
-            print("\t, ${it.overallDeviation}")
-        }
 
     }
 
@@ -89,8 +75,8 @@ class GeneticAlgorithm(private val image: ImageObject) {
             print(", Segments: ${population.bestIndividual().segments.size}")
 
             // save every 1/5th generation of total generations
-            if (generation % (numGenerations * 0.25).toInt() == 0)
-                image.save(population.bestIndividual(), mode="green", extra_info = "_generation=%d".format(generation)) // saving as image, black or green
+            //if (generation % (numGenerations * 0.25).toInt() == 0)
+            //    image.save(population.bestIndividual(), mode="green", extra_info = "_generation=%d".format(generation)) // saving as image, black or green
 
             prevBestFitness = generationBest
             population.selectionGA() // finds all parent candidates
@@ -107,9 +93,11 @@ class GeneticAlgorithm(private val image: ImageObject) {
         println("Best individual:")
         best.printInfo()
         if (params.save_results) {
-            val extra_information = "_final"
-            image.save(best, mode="black", extra_info=extra_information) // saving as image, black or green
-            image.save(best, mode="green", extra_info=extra_information) // saving as image, black or green
+            val extra_information = "_SIMPLEGA_final"
+            image.saveAll(setOf(best) , mode="black_GA", extra_info = extra_information)
+            image.saveAll(setOf(best) , mode="green_GA", extra_info = extra_information)
+            //image.save(best, mode="black_GA", extra_info=extra_information) // saving as image, black or green
+            //image.save(best, mode="green_GA", extra_info=extra_information) // saving as image, black or green
         }
 
     }

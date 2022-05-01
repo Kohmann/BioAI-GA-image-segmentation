@@ -1,8 +1,8 @@
 import java.awt.Color
 import java.awt.image.BufferedImage
-import java.awt.image.Kernel
 import java.awt.image.Raster
 import java.io.File
+import java.nio.file.Path
 import javax.imageio.ImageIO
 import kotlin.math.sqrt
 
@@ -80,6 +80,25 @@ class ImageObject(file: File,
         return image.getPixel(x, y, IntArray(image.numBands)).toList()
     }
 
+    fun saveAll(solutions: Set<Individual>, mode: String, extra_info: String = "") {
+
+        val folder = mode
+
+        val path = Path.of("$savePath$folder/")
+
+        try {
+            if (!path.toFile().exists())
+                path.toFile().mkdirs()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        deletePrevious(path)
+        for (solution in solutions) {
+            save(solution, mode, extra_info)
+        }
+    }
+
     fun save(solution: Individual, mode: String, extra_info: String = "") {
         /**
          * Saves the image to a file
@@ -88,24 +107,23 @@ class ImageObject(file: File,
          *  - "black" - white background with black edges
          *  - "green" - RGB image with green edges
          */
-        val folder = if (mode == "black") "type1" else "type2"
-
+        val folder = mode
         val fitness = "_%.0f_%.0f_%.0f_".format(solution.edgeValue, solution.connectivity, solution.overallDeviation)
-
 
         val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" +
                            solution.segments.size.toString() +
                            fitness +
                             extra_info + ".jpg"
 
+        println(fullFilePath)
+
 
         val imageFile = File(fullFilePath) // correct to
         val img = BufferedImage (image.width, image.height, BufferedImage.TYPE_INT_RGB)
 
-        val edgeColor = when (mode) {
-            "black" -> Color.BLACK
-            "green" -> Color.GREEN
-            else -> Color.BLACK
+        val edgeColor = when (mode.contains("black")) {
+            true -> Color.BLACK
+            false -> Color.GREEN
         }
         for (i in 0 until image.width * image.height) {
             val pixel = toPixelPair(i) // pixel coordinates, <int, int> : horizontal and vertical respectively
@@ -134,5 +152,8 @@ class ImageObject(file: File,
 
         ImageIO.write(img, "jpg", imageFile)
 
+    }
+    private fun deletePrevious(path: Path) {
+        for (file in path.toFile().listFiles()!!) if (!file.isDirectory) file.delete()
     }
 }

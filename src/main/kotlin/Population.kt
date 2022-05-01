@@ -84,7 +84,6 @@ class Population(private var populationSize: Int,
          */
         val nonDominatingSet = mutableSetOf<Individual>()
         val dominatedSet = HashSet<Individual>() // for speed
-        val returnSet = mutableSetOf<Individual>()
         for (individual in individualsSubset) {
             if (individual in dominatedSet) // already dominated
                 continue
