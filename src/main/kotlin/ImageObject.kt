@@ -109,7 +109,7 @@ class ImageObject(file: File,
          *  - "green" - RGB image with green edges
          */
         val folder = mode
-        val fitness = "_%.0f_%.0f_%.0f_".format(solution.edgeValue, solution.connectivity, solution.overallDeviation)
+        val fitness = "_edge=%.0f_conn=%.0f_dev=%.0f_".format(solution.edgeValue, solution.connectivity, solution.overallDeviation)
 
         val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" +
                            solution.segments.size.toString() +

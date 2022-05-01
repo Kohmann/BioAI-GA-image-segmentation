@@ -158,15 +158,13 @@ class Individual(private val image: ImageObject,
         // First, correct the chromosome
         this.chromosome = this.correctChromosome(this.chromosome)
 
-        //println("printing chromosome as matrix")
+        //println("chromosome as matrix")
         //for (i in 0 until this.chromosome.size) {
         //    if (i % this.imgWidth == 0) {
         //        println()
         //    }
         //    print("%-5s  ".format(this.chromosome[i].toString()))
         //}
-
-
 
         val segments = ArrayList<MutableSet<Int>>()
         val unvisitedNodes = MutableList(geneSize) { it }
@@ -178,35 +176,31 @@ class Individual(private val image: ImageObject,
             if (segment.isEmpty())
                 segments.add(mutableSetOf(node))
             segments.add(segment)
+            //println("\nsegment: $segment\n")
 
             unvisitedNodes.removeAll(segment)
         }
-
+        //println("All segments: $segments")
         // just a check to see if all nodes exist in a segment
-
         for (i in 0 until geneSize) {
             if (!segments.any { it.contains(i) }) {
                 println("Node $i is not in any segment")
             }
         }
-        //println("all segments: $segments")
-        //println("Segmentsum: ${segments.flatten().sum()}")
 
         return segments
     }
     fun getConnectedNodes(startPos: Int, visited: MutableSet<Int> = mutableSetOf<Int>()): MutableSet<Int> {
         val connections = mutableSetOf<Int>()
 
-
         var i = startPos
         if (i !in visited)
             connections.add(i)
 
-
         do {
-            //val next = getNextNode(i) //getNextChild(i)
-            val pointsTowardsMe = getNextNode(i)
-            val next = if (pointsTowardsMe == i) getNextNode(i) else pointsTowardsMe
+            val next = getNextNode(i) //getNextChild(i)
+            //val pointsTowardsMe = getNextChild(i, visited)
+            //val next = if (pointsTowardsMe == i) getNextNode(i) else pointsTowardsMe
 
             visited.add(i)
 
@@ -306,7 +300,7 @@ class Individual(private val image: ImageObject,
             if (chromosome[node] == direction)
                 return node
         }
-        return getNextNode(i)
+        return i //getNextNode(i)
     }
 
 
