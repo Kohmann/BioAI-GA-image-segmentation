@@ -60,19 +60,6 @@ class GeneticAlgorithm(private val image: ImageObject) {
         }
 
 
-        println("Connectivity")
-        population.fronts[0].forEach {
-            print("\t, ${it.connectivity}")
-        }
-        println("\nEdge")
-        population.fronts[0].forEach {
-            print("\t, ${it.edgeValue}")
-        }
-        println("\nOverall")
-        population.fronts[0].forEach {
-            print("\t, ${it.overallDeviation}")
-        }
-
     }
 
     fun runGA() {
@@ -106,10 +93,11 @@ class GeneticAlgorithm(private val image: ImageObject) {
         println("Best individual:")
         best.printInfo()
         if (params.save_results) {
-            val extra_information = "_final"
-            //image.saveAll(setOf(best) , mode="black", extra_info=extra_information)
-            image.save(best, mode="black", extra_info=extra_information) // saving as image, black or green
-            image.save(best, mode="green", extra_info=extra_information) // saving as image, black or green
+            val extra_information = "_SIMPLEGA_final"
+            image.saveAll(setOf(best) , mode="black_GA", extra_info = extra_information)
+            image.saveAll(setOf(best) , mode="green_GA", extra_info = extra_information)
+            //image.save(best, mode="black_GA", extra_info=extra_information) // saving as image, black or green
+            //image.save(best, mode="green_GA", extra_info=extra_information) // saving as image, black or green
         }
 
     }

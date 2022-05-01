@@ -414,7 +414,7 @@ class Individual(private val image: ImageObject,
         // There exists a segment that can be joined
         if (this.segments.size < 5) return
 
-
+        //this.segments.sortedBy { it.size }.first()
         val segmentIndex = Random.nextInt(this.segments.size-1)
         val segment = this.segments.removeAt(segmentIndex)
         val segmentColor = this.segments_mu.removeAt(segmentIndex)
@@ -533,8 +533,9 @@ class Individual(private val image: ImageObject,
          */
         if (mutationRate > 0.0) {
             if (Random.nextDouble() < mutationRate) {
-                when (Random.nextInt(0,1)) {
+                when (Random.nextInt(0,2)) {
                     0 -> randomMutation(mutationRate)
+                    //else -> joinSegmentSearch()
                     else -> joinSegments()
                 }
             }

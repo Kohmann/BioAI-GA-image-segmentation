@@ -82,8 +82,7 @@ class ImageObject(file: File,
 
     fun saveAll(solutions: Set<Individual>, mode: String, extra_info: String = "") {
 
-
-        val folder = if (mode == "black") "black" else "green"
+        val folder = mode
 
         val path = Path.of("$savePath$folder/")
 
@@ -108,9 +107,7 @@ class ImageObject(file: File,
          *  - "black" - white background with black edges
          *  - "green" - RGB image with green edges
          */
-        var folder = if (mode == "black") "black" else "green"
-
-
+        val folder = mode
         val fitness = "_%.0f_%.0f_%.0f_".format(solution.edgeValue, solution.connectivity, solution.overallDeviation)
 
         val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" +
@@ -124,10 +121,9 @@ class ImageObject(file: File,
         val imageFile = File(fullFilePath) // correct to
         val img = BufferedImage (image.width, image.height, BufferedImage.TYPE_INT_RGB)
 
-        val edgeColor = when (mode) {
-            "black" -> Color.BLACK
-            "green" -> Color.GREEN
-            else -> Color.BLACK
+        val edgeColor = when (mode.contains("black")) {
+            true -> Color.BLACK
+            false -> Color.GREEN
         }
         for (i in 0 until image.width * image.height) {
             val pixel = toPixelPair(i) // pixel coordinates, <int, int> : horizontal and vertical respectively
