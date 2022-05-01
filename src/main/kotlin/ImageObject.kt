@@ -19,7 +19,7 @@ class ImageObject(file: File,
 
     private fun load(file: File): Raster {
         //val image = ImageIO.read(file).raster
-        val image = ImageIO.read(file).raster.createChild(0, 0, 7, 7, 0, 0, null)
+        val image = ImageIO.read(file).raster.createChild(0, 0, 100, 100, 0, 0, null)
 
         // x is in horisintal direction, y is in vertical direction
         val width = image.width

@@ -11,7 +11,7 @@ class Parameters {
 
     val useMST = true
 
-    val simpleGA: Boolean = true
+    val simpleGA: Boolean = false
     val edgeWeight = 1.0
     val connectivityWeight = 10.0
     val deviationWeight = 1.0
