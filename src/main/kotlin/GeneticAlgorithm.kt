@@ -30,8 +30,8 @@ class GeneticAlgorithm(private val image: ImageObject) {
             println("\tUnique individuals: ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
 
             val segmentCount = population.individuals.map { it.segments.flatten().sum() }
-            //println("segmentCount ${segmentCount.joinToString(", ")}")
-            println("\tThe segments includes all pixels just once: ${segmentCount.all { it == segmentCount[0]}}")
+            if (segmentCount.any { it != segmentCount[0]})
+                throw IllegalStateException("Bugged individual, segment count is not equal")
 
             val segmentSizes = population.individuals.map { it.segments.size }
             println("\tAverage segment size: ${segmentSizes.average()}")
@@ -42,7 +42,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
             population.createOffspring(mutationRate, crossoverRate)
 
             val end = System.currentTimeMillis()
-            println("\t Time used in ${end - start}ms, ${(end - start) / 1000}s")
+            println("\tTime used in ${end - start}ms, ${(end - start) / 1000}s")
 
             generation++
         }
@@ -87,7 +87,8 @@ class GeneticAlgorithm(private val image: ImageObject) {
             print("\t Best: %-10.2f  Fitness improvement: %-10.2f".format(generationBest, (prevBestFitness - generationBest) ))
             print(", Segments: ${population.bestIndividual().segments.size}")
 
-            if (generation % 5 == 0)
+            // save every 1/5th generation of total generations
+            if (generation % (numGenerations * 0.25).toInt() == 0)
                 image.save(population.bestIndividual(), mode="green", extra_info = "_generation=%d".format(generation)) // saving as image, black or green
 
             prevBestFitness = generationBest

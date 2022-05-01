@@ -90,8 +90,12 @@ class ImageObject(file: File,
          */
         val folder = if (mode == "black") "type1" else "type2"
 
+        val fitness = "_%.0f_%.0f_%.0f_".format(solution.edgeValue, solution.connectivity, solution.overallDeviation)
+
+
         val fullFilePath = savePath + folder + "/" + "TEST_" + "numSegments_" +
                            solution.segments.size.toString() +
+                           fitness +
                             extra_info + ".jpg"
 
 

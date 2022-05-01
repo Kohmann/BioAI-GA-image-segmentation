@@ -74,10 +74,10 @@ class Individual(private val image: ImageObject,
             pos = bestEdge.to
         }
 
-        //for (i in 0 until 20) {
-        //    val randNode = Random.nextInt(0 until geneSize)
-        //    initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
-        //}
+        for (i in 0 until 3) {
+            val randNode = Random.nextInt(0 until geneSize)
+            initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
+        }
 
         return initChromosome
     }
