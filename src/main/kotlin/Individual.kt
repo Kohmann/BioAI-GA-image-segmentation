@@ -303,7 +303,6 @@ class Individual(private val image: ImageObject,
         return i //getNextNode(i)
     }
 
-
     fun isEdge(i: Int): Boolean {
         // Return true if the node has neighbours in another segment
         val commonSegment = segments.single { it.contains(i) }
@@ -319,8 +318,10 @@ class Individual(private val image: ImageObject,
          * Returns a list of two new individuals.
          * More crossovers to come
          */
-        return onePointCrossover(parentB)
-        //return mergeSectorCrossover(parentB)
+        if (Random.nextDouble() < 0.5)
+            return onePointCrossover(parentB)
+        else
+            return mergeSectorCrossover(parentB)
 
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
@@ -355,7 +356,7 @@ class Individual(private val image: ImageObject,
         val parentBCopy = parentB
 
         for (i in 0 until 10){
-            val crossoverPoint = Random.nextInt(0, this.geneSize)
+            val crossoverPoint = Random.nextInt(1, this.geneSize)
             var segment1 = mutableSetOf<Int>()
             var segment2 = mutableSetOf<Int>()
             for (segment in this.segments){
@@ -381,14 +382,15 @@ class Individual(private val image: ImageObject,
             parentACopy.segmentToGraph(newSegment)
             parentBCopy.segmentToGraph(newSegment)
 
-            for (i in 0 until crossoverPoint) {
-                childA[i] = parentACopy.chromosome[i]
-                childB[i] = parentBCopy.chromosome[i]
+            for (x in 0 until crossoverPoint) {
+                childA[x] = parentACopy.chromosome[x]
+                childB[x] = parentBCopy.chromosome[x]
             }
-            for (i in crossoverPoint until this.geneSize) {
-                childA[i] = parentBCopy.chromosome[i]
-                childB[i] = parentACopy.chromosome[i]
+            for (y in crossoverPoint until this.geneSize) {
+                childA[y] = parentBCopy.chromosome[y]
+                childB[y] = parentACopy.chromosome[y]
             }
+
         }
         return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
     }
@@ -593,7 +595,6 @@ class Individual(private val image: ImageObject,
         return Direction.NONE
 
     }
-
     /** reverses some number of directions inside a chromosome */
     fun reversePointMutation(mutationRate:Double) {
         /** manually assign the highest possible number of reverses */
