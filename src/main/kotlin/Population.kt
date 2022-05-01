@@ -2,6 +2,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import kotlin.collections.HashSet
 import kotlin.random.Random
 
 
@@ -53,7 +54,7 @@ class Population(private var populationSize: Int,
          * Assigns rank to each individual with respect to dominance in the objective fitness space.
          * https://link.springer.com/content/pdf/10.1007/3-540-45356-3.pdf   On pdf page: 857
          */
-        var rank = 1 // which panotofront we are working on
+        var rank = 1 // which panoptofront we are working on
         val unassignedIndividuals = individuals.toMutableList() // copy of individuals
         val rankedIndividuals = ArrayList<Set<Individual>>() // list of panotofronts
         while (unassignedIndividuals.isNotEmpty()) {
@@ -61,7 +62,7 @@ class Population(private var populationSize: Int,
 
             dominatingSet.forEach { it.assignRank(rank) }
             unassignedIndividuals.removeAll(dominatingSet)
-            rankedIndividuals.add(dominatingSet) // adds each panotofront to rankedIndividuals
+            rankedIndividuals.add(dominatingSet) // adds each panoptofront to rankedIndividuals
 
             rank++
         }
@@ -81,7 +82,7 @@ class Population(private var populationSize: Int,
          */
         val nonDominatingSet = mutableSetOf<Individual>()
         val dominatedSet = HashSet<Individual>() // for speed
-
+        val returnSet = mutableSetOf<Individual>()
         for (individual in individualsSubset) {
             if (individual in dominatedSet) // already dominated
                 continue
@@ -100,8 +101,7 @@ class Population(private var populationSize: Int,
                 }
             }
         }
-        nonDominatingSet.subtract(dominatedSet)
-        return nonDominatingSet
+        return nonDominatingSet.subtract(dominatedSet).toMutableSet()
     }
 
     fun determineCrowdingDistance(front: MutableList<Individual>): MutableList<Individual> {

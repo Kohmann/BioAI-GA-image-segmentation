@@ -2,6 +2,7 @@ import java.util.*
 import javax.swing.text.Segment
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashSet
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -296,7 +297,7 @@ class Individual(private val image: ImageObject,
          * Returns a list of two new individuals.
          * More crossovers to come
          */
-        return onePointCrossover(parentB)
+        return mergeSectorCrossover(parentB)
         // return uniformCrossover(parentB)
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
@@ -321,6 +322,57 @@ class Individual(private val image: ImageObject,
 
         return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
     }
+
+
+    private fun mergeSectorCrossover(parentB: Individual): Array<Individual> {
+        val childA = Array<Direction>(this.geneSize) { Direction.NONE }
+        val childB = Array<Direction>(this.geneSize) { Direction.NONE }
+        /**
+         * We have to make copies not to change initial individuals
+         */
+        val parentACopy = this
+        val parentBCopy = parentB
+
+        for (i in 0 until 10){
+            val crossoverPoint = Random.nextInt(0, this.geneSize)
+            var segment1 = mutableSetOf<Int>()
+            var segment2 = mutableSetOf<Int>()
+            for (segment in this.segments){
+                if (crossoverPoint in segment) {
+                    segment1 = segment
+                    break
+                }
+            }
+            for (segment in parentB.segments){
+                if (crossoverPoint in segment) {
+                    segment2 = segment
+                    break
+                }
+            }
+            val newSegment = segment1.union(segment2).toMutableList()
+            /**
+             * We merge indices of 2 segments to which breakpoint belongs
+             * We get a unified segment
+             * We change parent A and parent B so that
+             * They are of the form oooooooooooooo[segment starts....breakpoint......segment ends]ttttttttttttttttt
+             * we create kids just as in onePOintCrossover because the merged segments are now the same in both
+             */
+            parentACopy.segmentToGraph(newSegment)
+            parentBCopy.segmentToGraph(newSegment)
+
+            for (i in 0 until crossoverPoint) {
+                childA[i] = parentACopy.chromosome[i]
+                childB[i] = parentBCopy.chromosome[i]
+            }
+            for (i in crossoverPoint until this.geneSize) {
+                childA[i] = parentBCopy.chromosome[i]
+                childB[i] = parentACopy.chromosome[i]
+            }
+        }
+        return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
+    }
+
+
     private fun uniformCrossover(parentB: Individual): Array<Individual> {
         val chromosomeA = this.chromosome.clone()
         val chromosomeB = parentB.chromosome.clone()
@@ -437,6 +489,69 @@ class Individual(private val image: ImageObject,
         }
     }
 
+    fun returnReverse(dir:Direction): Direction{
+        if (dir == Direction.DOWN){
+            return Direction.UP
+        }
+        if (dir == Direction.UP){
+            return Direction.DOWN
+        }
+        if (dir == Direction.RIGHT){
+            return Direction.LEFT
+        }
+        if (dir == Direction.LEFT){
+            return Direction.RIGHT
+        }
+        return Direction.NONE
+
+    }
+
+    /** reverses some number of directions inside a chromosome */
+    fun reversePointMutation(mutationRate:Double) {
+        /** manually assign the highest possible number of reverses */
+        val NUMREVERSES = 100
+        val times = (0..NUMREVERSES).random().toInt()
+        for(i in  0 until times){
+            val index = (0..geneSize).random().toInt()
+            chromosome[index] = returnReverse(chromosome[index])
+        }
+    }
+
+
+    fun crazyMutation(mutationRate: Double) {
+        /**
+         * We randomly choose a cube size
+         * We randomly find  indices from which we take those
+         * We transpose those values
+         */
+        if (mutationRate < 0.0001){
+            val row = (0..imgHeight).random()
+            val column = (0..imgWidth).random()
+            val min = minOf(imgWidth - column, imgHeight - row)
+            val size = (2..min).random()
+            transposeSquare(row, column, size)
+
+        }
+    }
+
+    fun transposeSquare(row:Int, column:Int, size:Int){
+        var matrix = MutableList<MutableList<Direction>>(0) { mutableListOf(Direction.NONE) }
+        for (i in row until row + size){
+            var vector = MutableList<Direction>(0) { Direction.NONE }
+            for (j in column until column + size){
+                vector.add(chromosome[i*imgHeight + imgWidth])
+            }
+            matrix.add(vector)
+        }
+
+        for (i in 0 until size){
+            for (j in 0 until size) {
+                chromosome[(row + i)*imgHeight + column + j] = matrix[j][i]
+            }
+        }
+
+    }
+
     fun crowdingTournamentSelection(other: Individual): Individual {
         return if (this.rank < other.rank)
             this
@@ -492,6 +607,7 @@ class Individual(private val image: ImageObject,
         }
         this.overallDeviation = sum
     }
+
     fun connectivityFitness() {
         /**
          * Measure of connectivity
