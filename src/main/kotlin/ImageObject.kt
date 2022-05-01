@@ -81,9 +81,10 @@ class ImageObject(file: File,
     }
 
     fun saveAll(solutions: Set<Individual>, mode: String, extra_info: String = "") {
-
+        /**
+         * Saves all solutions to a file, and creates and deletes the directory if needed
+         */
         val folder = mode
-
         val path = Path.of("$savePath$folder/")
 
         try {
@@ -116,7 +117,6 @@ class ImageObject(file: File,
                             extra_info + ".jpg"
 
         println(fullFilePath)
-
 
         val imageFile = File(fullFilePath) // correct to
         val img = BufferedImage (image.width, image.height, BufferedImage.TYPE_INT_RGB)

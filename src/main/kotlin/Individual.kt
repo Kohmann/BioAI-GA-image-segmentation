@@ -76,7 +76,7 @@ class Individual(private val image: ImageObject,
             pos = bestEdge.to
         }
 
-        for (i in 0 until 3) {
+        for (i in 0 until 2) {
             val randNode = Random.nextInt(0 until geneSize)
             initChromosome[randNode] = setDirection(randNode, randNode) // Set the direction of the 'to' node
         }
@@ -84,6 +84,9 @@ class Individual(private val image: ImageObject,
         return initChromosome
     }
     private fun setDirection(from: Int, to: Int): Direction {
+        /**
+         * Sets the direction of the 'to' node based on the 'from' node
+         */
         return if (from -1 == to) {
             Direction.RIGHT
         } else if (from + 1 == to) {
@@ -155,16 +158,25 @@ class Individual(private val image: ImageObject,
         // First, correct the chromosome
         this.chromosome = this.correctChromosome(this.chromosome)
 
+        //println("printing chromosome as matrix")
+        //for (i in 0 until this.chromosome.size) {
+        //    if (i % this.imgWidth == 0) {
+        //        println()
+        //    }
+        //    print("%-5s  ".format(this.chromosome[i].toString()))
+        //}
+
+
+
         val segments = ArrayList<MutableSet<Int>>()
         val unvisitedNodes = MutableList(geneSize) { it }
 
         while (unvisitedNodes.isNotEmpty()) {
-            val node = unvisitedNodes.removeFirst()
+            val node = unvisitedNodes.removeFirst() // removeLast
 
             val segment = getConnectedNodes(node)
             if (segment.isEmpty())
                 segments.add(mutableSetOf(node))
-
             segments.add(segment)
 
             unvisitedNodes.removeAll(segment)
@@ -177,6 +189,7 @@ class Individual(private val image: ImageObject,
                 println("Node $i is not in any segment")
             }
         }
+        //println("all segments: $segments")
         //println("Segmentsum: ${segments.flatten().sum()}")
 
         return segments
@@ -184,17 +197,17 @@ class Individual(private val image: ImageObject,
     fun getConnectedNodes(startPos: Int, visited: MutableSet<Int> = mutableSetOf<Int>()): MutableSet<Int> {
         val connections = mutableSetOf<Int>()
 
-        //if (chromosome[startPos] == Direction.NONE) {
-        //    return connections.toMutableList()
-        //}
+
         var i = startPos
         if (i !in visited)
             connections.add(i)
 
-        //println()
 
         do {
-            val next = getNextNode(i)
+            //val next = getNextNode(i) //getNextChild(i)
+            val pointsTowardsMe = getNextNode(i)
+            val next = if (pointsTowardsMe == i) getNextNode(i) else pointsTowardsMe
+
             visited.add(i)
 
             //println("Standing in node: $i")
@@ -285,6 +298,18 @@ class Individual(private val image: ImageObject,
             else -> i
         }
     }
+    fun getNextChild(i: Int, visited: MutableSet<Int>): Int {
+        // Return the index of a child that points to me (i)
+        val neighbourNodes = getNeighbors(i).toMutableSet().subtract(visited)
+        for (node in neighbourNodes) {
+            val direction = setDirection(i, node)
+            if (chromosome[node] == direction)
+                return node
+        }
+        return getNextNode(i)
+    }
+
+
     fun isEdge(i: Int): Boolean {
         // Return true if the node has neighbours in another segment
         val commonSegment = segments.single { it.contains(i) }
@@ -294,15 +319,14 @@ class Individual(private val image: ImageObject,
         else i + this.imgWidth !in commonSegment && i + this.imgWidth < this.geneSize
     }
 
-
     fun crossover(parentB: Individual): Array<Individual> {
         /**
          * Crossover two individuals.
          * Returns a list of two new individuals.
          * More crossovers to come
          */
-        //return onePointCrossover(parentB)
-        return mergeSectorCrossover(parentB)
+        return onePointCrossover(parentB)
+        //return mergeSectorCrossover(parentB)
 
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
@@ -327,8 +351,6 @@ class Individual(private val image: ImageObject,
 
         return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
     }
-
-
     private fun mergeSectorCrossover(parentB: Individual): Array<Individual> {
         val childA = Array<Direction>(this.geneSize) { Direction.NONE }
         val childB = Array<Direction>(this.geneSize) { Direction.NONE }
@@ -533,7 +555,7 @@ class Individual(private val image: ImageObject,
          */
         if (mutationRate > 0.0) {
             if (Random.nextDouble() < mutationRate) {
-                when (Random.nextInt(0,2)) {
+                when (Random.nextInt(0,1)) {
                     0 -> randomMutation(mutationRate)
                     //else -> joinSegmentSearch()
                     else -> joinSegments()
@@ -588,8 +610,6 @@ class Individual(private val image: ImageObject,
             chromosome[index] = returnReverse(chromosome[index])
         }
     }
-
-
     fun crazyMutation(mutationRate: Double) {
         /**
          * We randomly choose a cube size
@@ -605,7 +625,6 @@ class Individual(private val image: ImageObject,
 
         }
     }
-
     fun transposeSquare(row:Int, column:Int, size:Int){
         val matrix = MutableList<MutableList<Direction>>(0) { mutableListOf(Direction.NONE) }
         for (i in row until row + size){
@@ -679,7 +698,6 @@ class Individual(private val image: ImageObject,
         }
         this.overallDeviation = sum
     }
-
     fun connectivityFitness() {
         /**
          * Measure of connectivity
