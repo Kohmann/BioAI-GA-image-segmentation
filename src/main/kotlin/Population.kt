@@ -2,6 +2,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import kotlin.collections.HashSet
 import kotlin.random.Random
 
 
@@ -83,7 +84,7 @@ class Population(private var populationSize: Int,
          */
         val nonDominatingSet = mutableSetOf<Individual>()
         val dominatedSet = HashSet<Individual>() // for speed
-
+        val returnSet = mutableSetOf<Individual>()
         for (individual in individualsSubset) {
             if (individual in dominatedSet) // already dominated
                 continue

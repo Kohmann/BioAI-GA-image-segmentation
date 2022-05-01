@@ -302,6 +302,7 @@ class Individual(private val image: ImageObject,
          * More crossovers to come
          */
         return onePointCrossover(parentB)
+
     }
     private fun onePointCrossover(parentB: Individual): Array<Individual> {
         /**
@@ -524,7 +525,6 @@ class Individual(private val image: ImageObject,
         }
         return edgeNeighbours
     }
-
     fun mutate(mutationRate: Double) {
         /**
          * Mutates the chromosome at random.
@@ -542,6 +542,7 @@ class Individual(private val image: ImageObject,
             evaluated = false
         }
     }
+
     fun update() {
         this.segments = createSegments() // update the segments
         this.segments_mu = averageSegmentColor() // update the mean segments
@@ -679,6 +680,7 @@ class Individual(private val image: ImageObject,
         }
         this.overallDeviation = sum
     }
+
     fun connectivityFitness() {
         /**
          * Measure of connectivity

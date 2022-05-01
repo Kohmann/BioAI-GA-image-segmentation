@@ -60,6 +60,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
             }
         }
 
+
         println("Connectivity")
         population.fronts[0].forEach {
             print("\t, ${it.connectivity}")
