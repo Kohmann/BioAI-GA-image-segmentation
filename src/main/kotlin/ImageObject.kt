@@ -130,7 +130,7 @@ class ImageObject(file: File,
             if (solution.isEdge(i)) {
                 img.setRGB(pixel.first, pixel.second, edgeColor.rgb) // set the pixel to the edge color
             } else {
-                if (mode == "green") {
+                if (mode.contains("green")) {
                     val originalColor = rawImage.getRGB(pixel.first, pixel.second) // get the original RGB color
                     img.setRGB(pixel.first, pixel.second, originalColor) // set the pixel to the original color
                 } else {

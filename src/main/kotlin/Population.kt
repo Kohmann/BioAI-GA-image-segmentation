@@ -15,16 +15,16 @@ class Population(private var populationSize: Int,
 
     var fronts = ArrayList<Set<Individual>>()
 
-    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+    private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()) //Runtime.getRuntime().availableProcessors()
 
     init {
         println("Using ${Runtime.getRuntime().availableProcessors()} threads")
         repeat(populationSize) {
             parents.add(Individual(image))
         }
-        parents.forEach {
-            it.update()
-        }
+        //parents.forEach {
+        //    it.update()
+        //}
     }
     fun stopThreads() {
         executor.shutdown()
@@ -136,31 +136,6 @@ class Population(private var populationSize: Int,
         return front
     }
 
-    fun selection2() {
-        val newPopulation = ArrayList<Individual>()
-        var frontNr = 0
-
-        while (newPopulation.size < populationSize) {
-
-            // If space for the whole front, add it
-            if (newPopulation.size + fronts[frontNr].size <= populationSize) {
-                newPopulation.addAll(fronts[frontNr])
-            }
-            else { // otherwise, add the individuals with the highest crowding distance
-                val frontWithDistance = determineCrowdingDistance(fronts[frontNr].toMutableList())
-                frontWithDistance.sortBy { -it.crowdingDistance }
-
-                val startIndex = frontWithDistance.lastIndex - (populationSize - newPopulation.size)
-                newPopulation.addAll(frontWithDistance.subList(startIndex, frontWithDistance.lastIndex))
-            }
-            frontNr++
-        }
-
-        individuals.clear()
-        parents.clear()
-        parents.addAll(newPopulation)
-    }
-
     fun selection() {
         val newPopulation = ArrayList<Individual>()
         var frontNr = 0
@@ -192,27 +167,6 @@ class Population(private var populationSize: Int,
         individuals.clear()
         parents.clear()
         parents.addAll(newPopulation)
-    }
-    fun createOffspring2(mutationRate:Double, crossoverRate:Double) {
-        /**
-         * Creates the offspring of the parents.
-         * TODO: make it proper
-         */
-
-        val newPopulation = ArrayList<Individual>()
-
-        while (newPopulation.size < populationSize) {
-            val parent1 = parents.random()
-            var parent2 = parents.random()
-            while (parent2 == parent1) parent2 = parents.random()
-
-            val children = crossover(parent1, parent2, crossoverRate)
-            children.forEach { it.mutate(mutationRate) }
-
-            newPopulation.addAll(children)
-        }
-        offspring.clear()
-        offspring.addAll(newPopulation)
     }
 
     fun createOffspring(mutationRate:Double, crossoverRate:Double) {

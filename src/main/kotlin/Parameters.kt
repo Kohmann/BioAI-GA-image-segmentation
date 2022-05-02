@@ -1,13 +1,13 @@
 class Parameters {
 
     val imageFolder = "training_images"
-    val workingImageFolder = "86016"
+    val workingImageFolder = "118035"
 
     // Genetic algorithm parameters
-    val populationSize: Int = 10
+    val populationSize: Int = 30
     val mutationRate: Double = 0.2 // currently only act as a bool for doing JoinSegments or not
     val crossoverRate: Double = 0.7 //
-    val numGenerations: Int = 30
+    val numGenerations: Int = 10
 
     // When saving the images, save only those that satisfy the following conditions
     val minNumberOfSegments = 4
@@ -21,8 +21,8 @@ class Parameters {
     val useMST = true
 
     val simpleGA: Boolean = false
-    val edgeWeight = 3.0
-    val connectivityWeight = 100.0
-    val deviationWeight = 10.0
+    val edgeWeight = 1.0
+    val connectivityWeight = 500.0
+    val deviationWeight = 2.0
 
 }

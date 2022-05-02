@@ -26,6 +26,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
             // Non Dominated Sorting
             population.evaluate()
 
+
             println("\tUnique individuals: ${population.individuals.map { it.hashCode() }.toSet().size} of ${population.individuals.size}")
 
             val segmentCount = population.individuals.map { it.segments.flatten().sum() }
@@ -37,6 +38,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
 
             population.assignRank()
             population.selection() // finds all parent candidates
+
 
             population.createOffspring(mutationRate, crossoverRate)
 
@@ -71,7 +73,7 @@ class GeneticAlgorithm(private val image: ImageObject) {
             population.combineWithOffspring() // combines parents with offspring
             population.evaluate()
             val generationBest = population.bestIndividual().weightedFitness
-            print("\t Best: %-10.2f  Fitness improvement: %-10.2f".format(generationBest, (prevBestFitness - generationBest) ))
+            print("\t Best: %-11.2f  Fitness improvement: %-10.2f".format(generationBest, (prevBestFitness - generationBest) ))
             print(", Segments: ${population.bestIndividual().segments.size}")
 
             // save every 1/5th generation of total generations
