@@ -1,6 +1,7 @@
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
+import kotlin.math.abs
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -456,6 +457,48 @@ class Individual(private val image: ImageObject,
         // Ensures that the edges of the given segment are connected in the chromosome
         segmentToGraph(newSegment)
     }
+
+    fun compareColors(color1:List<Int>, color2:List<Int>): Boolean{
+        for(i in 0..2){
+            if(abs(color1[i] - color2[i]) > 5){
+                return false
+            }
+        }
+        return true
+    }
+
+    fun adjustBorderMutation(mutationRate: Double){
+        /**
+         * We go over all segments
+         * We try to find the best pair of neighbouring segments in terms of adjusting their borders
+         * we mutate their borders and change those segments
+         */
+        if(Random.nextDouble() < mutationRate){
+            val segmentIndex = Random.nextInt(0..segments.size - 1)
+            val segment = this.segments.removeAt(segmentIndex)
+            val segmentColor = this.segments_mu.removeAt(segmentIndex)
+            val edgeNeighbours = getAllEdgeNeighbours(segment)
+//            val a = 3
+            for(segment2 in this.segments){
+                val nodes = mutableSetOf<Int>()
+                for (neighbourNode in edgeNeighbours){
+                    if (neighbourNode in segment2){
+                        nodes.add(neighbourNode)
+                    }
+                }
+                if(!nodes.isEmpty()){
+                    val nodesColor = averageSegmentColor(nodes)
+                    if(image.distance(segmentColor, nodesColor) > 15) {
+                        val newSegment = segment.union(nodes).toMutableList()
+                        segmentToGraph(newSegment)
+                    }
+                }
+            }
+
+
+        }
+    }
+
     private fun joinSegmentSearch() {
         /**
          * Combines two neighbouring segments which are similar into one.
@@ -583,8 +626,9 @@ class Individual(private val image: ImageObject,
          */
         if (mutationRate > 0.0) {
             if (Random.nextDouble() < mutationRate) {
-                when (Random.nextInt(0,1)) {
+                when (Random.nextInt(0,2)) {
                     0 -> randomMutation(mutationRate)
+//                    1 -> adjustBorderMutation(mutationRate)
                     //1 -> joinSegmentSearch()
                     //2 -> splitSegment()
                     //3 -> crazyMutation(mutationRate)
@@ -614,6 +658,7 @@ class Individual(private val image: ImageObject,
         chromosome[randomIndex] =  possibleDirections.subtract(setOf(chromosome[randomIndex])).random() // Only new directions
     }
 
+
     fun returnReverse(dir:Direction): Direction{
         if (dir == Direction.DOWN){
             return Direction.UP
@@ -640,6 +685,13 @@ class Individual(private val image: ImageObject,
             chromosome[index] = returnReverse(chromosome[index])
         }
     }
+
+    fun switchMutation(mutationRate: Double){
+        if(Random.nextDouble() < mutationRate){
+            chromosome[Random.nextInt(0..chromosome.size)] = chromosome[Random.nextInt(0..chromosome.size)]
+        }
+    }
+
     fun crazyMutation(mutationRate: Double) {
         /**
          * We randomly choose a cube size
