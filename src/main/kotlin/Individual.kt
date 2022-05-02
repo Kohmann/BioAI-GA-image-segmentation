@@ -320,7 +320,7 @@ class Individual(private val image: ImageObject,
          * Returns a list of two new individuals.
          * More crossovers to come
          */
-        if (Random.nextDouble() < 0.5)
+        if (Random.nextDouble() < 0.8)
             return onePointCrossover(parentB)
         else
             return mergeSectorCrossover(parentB)
@@ -358,44 +358,49 @@ class Individual(private val image: ImageObject,
         val parentACopy = this
         val parentBCopy = parentB
 
-        for (i in 0 until 5){
-            val crossoverPoint = Random.nextInt(1, this.geneSize)
-            var segment1 = mutableSetOf<Int>()
-            var segment2 = mutableSetOf<Int>()
-            for (segment in this.segments){
-                if (crossoverPoint in segment) {
-                    segment1 = segment
-                    break
-                }
-            }
-            for (segment in parentB.segments){
-                if (crossoverPoint in segment) {
-                    segment2 = segment
-                    break
-                }
-            }
-            val newSegment = segment1.union(segment2).toMutableList()
-            /**
-             * We merge indices of 2 segments to which breakpoint belongs
-             * We get a unified segment
-             * We change parent A and parent B so that
-             * They are of the form oooooooooooooo[segment starts....breakpoint......segment ends]ttttttttttttttttt
-             * we create kids just as in onePOintCrossover because the merged segments are now the same in both
-             */
-            parentACopy.segmentToGraph(newSegment)
-            parentBCopy.segmentToGraph(newSegment)
 
-            for (x in 0 until crossoverPoint) {
-                childA[x] = parentACopy.chromosome[x]
-                childB[x] = parentBCopy.chromosome[x]
-            }
-            for (y in crossoverPoint until this.geneSize) {
-                childA[y] = parentBCopy.chromosome[y]
-                childB[y] = parentACopy.chromosome[y]
-            }
+        val crossoverPoint = Random.nextInt(1, this.geneSize-1)
+        var segment1 = mutableSetOf<Int>()
+        var segment2 = mutableSetOf<Int>()
 
+        for (segment in this.segments){
+            if (crossoverPoint in segment) {
+                segment1 = segment
+                break
+            }
         }
-        return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
+        for (segment in parentB.segments){
+            if (crossoverPoint in segment) {
+                segment2 = segment
+                break
+            }
+        }
+        val newSegment = segment1.union(segment2).toMutableList()
+
+        /**
+         * We merge indices of 2 segments to which breakpoint belongs
+         * We get a unified segment
+         * We change parent A and parent B so that
+         * They are of the form oooooooooooooo[segment starts....breakpoint......segment ends]ttttttttttttttttt
+         * we create kids just as in onePOintCrossover because the merged segments are now the same in both
+         */
+        parentACopy.segmentToGraph(newSegment)
+        parentBCopy.segmentToGraph(newSegment)
+
+        for (x in 0 until crossoverPoint) {
+            childA[x] = parentACopy.chromosome[x]
+            childB[x] = parentBCopy.chromosome[x]
+        }
+        for (y in crossoverPoint until this.geneSize) {
+            childA[y] = parentBCopy.chromosome[y]
+            childB[y] = parentACopy.chromosome[y]
+        }
+        val childA1 = Individual(image, initChromosome = childA)
+        val childB1 = Individual(image, initChromosome = childB)
+        //childA1.segmentToGraph(newSegment) // segmentToGraph
+        //childB1.segmentToGraph(newSegment)
+        return arrayOf(childA1, childB1)
+        //return arrayOf(Individual(image, initChromosome = childA), Individual(image, initChromosome = childB))
     }
 
     private fun splitSegment() {
@@ -452,10 +457,10 @@ class Individual(private val image: ImageObject,
         //println("segmentNr: $segmentNr")
         val segmentA = this.segments.removeAt(segmentNr) //all elements after segmentNr are shifted to the left
         val segmentB = this.segments.removeAt(segmentNr)
-        val newSegment = segmentA.union(segmentB).toMutableList()
+        val newSegment = segmentA.union(segmentB)
 
         // Ensures that the edges of the given segment are connected in the chromosome
-        segmentToGraph(newSegment)
+        segmentToGraph(newSegment.toMutableList())
     }
 
     fun compareColors(color1:List<Int>, color2:List<Int>): Boolean{
@@ -626,17 +631,17 @@ class Individual(private val image: ImageObject,
          */
         if (mutationRate > 0.0) {
             if (Random.nextDouble() < mutationRate) {
-                when (Random.nextInt(0,2)) {
+                when (Random.nextInt(0,5)) {
                     0 -> randomMutation(mutationRate)
-//                    1 -> adjustBorderMutation(mutationRate)
-                    //1 -> joinSegmentSearch()
-                    //2 -> splitSegment()
+
+                    1 -> splitSegment()
                     //3 -> crazyMutation(mutationRate)
-                    //4 -> reversePointMutation(mutationRate)
-                    //else -> joinSegments()
+                    //1 -> reversePointMutation(mutationRate)
+                    2 -> flipWorstEdge()
+                    3 -> joinSegments()
+                    else -> joinSegmentSearch()
                 }
             }
-
             createdSegments = false
             evaluated = false
         }
@@ -657,7 +662,25 @@ class Individual(private val image: ImageObject,
         val randomIndex = Random.nextInt(chromosome.size)
         chromosome[randomIndex] =  possibleDirections.subtract(setOf(chromosome[randomIndex])).random() // Only new directions
     }
+    private fun flipWorstEdge() {
+        /**
+         * Flips the worst edge a random segment.
+         */
+        val segment = this.segments.random()
+        var worstEdge = Pair(0, 0.0)
 
+        for (node in segment) {
+            getNeighbors(node).forEach { neighbour ->
+                if (neighbour in segment && node != neighbour) {
+                    val dist = image.distance(node, neighbour)
+                    if (dist > worstEdge.second)
+                        worstEdge = Pair(neighbour, dist)
+                }
+            }
+        }
+        this.chromosome[worstEdge.first] = returnReverse(this.chromosome[worstEdge.first])
+
+    }
 
     fun returnReverse(dir:Direction): Direction{
         if (dir == Direction.DOWN){
@@ -857,6 +880,11 @@ class Individual(private val image: ImageObject,
     }
 
     override fun hashCode() = this.chromosome.toString().hashCode()
-    fun copy() = Individual(image, chromosome)
+    fun copy(): Individual {
+        val newIndividual = Individual(this.image, chromosome)
+        newIndividual.segments = this.segments
+
+        return newIndividual
+    }
 
 }

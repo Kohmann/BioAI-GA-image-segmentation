@@ -5,7 +5,7 @@ import re
 
 path = os.path.dirname(os.path.abspath(__file__)) #.replace("evaluator", "img"))
 
-test_img_path = "86016/"
+test_img_path = "118035/"
 
 optimalFolder = path + "/Optimal_Segmentation_Files/" + test_img_path  
 studentFolder = path + "/Student_Segmentation_Files/" + test_img_path  + "black/"# "black_GA" if simple GA
