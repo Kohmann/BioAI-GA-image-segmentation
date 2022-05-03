@@ -20,7 +20,7 @@ class Parameters {
     // Parameters for individuals
     val useMST = true
 
-    val simpleGA: Boolean = true
+    val simpleGA: Boolean = false
     val edgeWeight = 1.0
     val connectivityWeight = 500.0
     val deviationWeight = 2.0
