@@ -5,10 +5,10 @@ import re
 
 path = os.path.dirname(os.path.abspath(__file__)) #.replace("evaluator", "img"))
 
-test_img_path = "118035/"
+test_img_path = "42044 (eval)(single objective)/"
 
 optimalFolder = path + "/Optimal_Segmentation_Files/" + test_img_path  
-studentFolder = path + "/Student_Segmentation_Files/" + test_img_path  + "black/"# "black_GA" if simple GA
+studentFolder = path + "/Student_Segmentation_Files/" + test_img_path  + "black_GA/"# "black_GA" if simple GA
 colorValueSlackRange = 40
 blackValueThreshold = 100 # colors below 100 is black
 pixelRangeCheck = 4

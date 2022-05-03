@@ -1,10 +1,10 @@
 class Parameters {
 
     val imageFolder = "training_images"
-    val workingImageFolder = "76002 (eval) (lett)"
+    val workingImageFolder = "42044 (eval)(single objective)"
 
     // Genetic algorithm parameters
-    val populationSize: Int = 30
+    val populationSize: Int = 20
     val mutationRate: Double = 0.2 // currently only act as a bool for doing JoinSegments or not
     val crossoverRate: Double = 0.7 //
     val numGenerations: Int = 10
@@ -20,7 +20,7 @@ class Parameters {
     // Parameters for individuals
     val useMST = true
 
-    val simpleGA: Boolean = false
+    val simpleGA: Boolean = true
     val edgeWeight = 1.0
     val connectivityWeight = 500.0
     val deviationWeight = 2.0
